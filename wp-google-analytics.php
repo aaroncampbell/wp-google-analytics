@@ -41,6 +41,16 @@ class wpGoogleAnalytics {
 	static $page_slug = 'wp-google-analytics';
 
 	/**
+	 * Initialize the plugin
+	 */
+	function __construct() {
+		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
+		add_action( 'get_footer',               array( $this, 'insert_code' ) );
+		add_action( 'init',                     array( $this, 'start_ob' ) );
+		add_action( 'update_option_wga-roles',  array( $this, 'update_option' ), 10, 2 );
+	}
+
+	/**
 	 * This adds the options page for this plugin to the Options page
 	 */
 	function admin_menu() {
@@ -311,7 +321,7 @@ class wpGoogleAnalytics {
 		return $m[0];
 	}
 
-	function updateOption($oldValue, $newValue) {
+	function update_option($oldValue, $newValue) {
 		/**
 		 * @var WP_Roles
 		 */
@@ -337,12 +347,7 @@ class wpGoogleAnalytics {
 	}
 }
 
-/**
- * Add the necessary hooks
- */
-add_action('admin_menu', array('wpGoogleAnalytics','admin_menu'));
-add_action('get_footer', array('wpGoogleAnalytics', 'insert_code'));
-add_action('init', array('wpGoogleAnalytics', 'start_ob'));
-add_action('update_option_wga-roles', array('wpGoogleAnalytics', 'updateOption'), null, 2);
-add_action('activate_wp-google-analytics/wp-google-analytics.php', array('wpGoogleAnalytics', 'activatePlugin'));
-?>
+global $wp_google_analytics;
+$wp_google_analytics = new wpGoogleAnalytics;
+
+add_action( 'activate_wp-google-analytics/wp-google-analytics.php', array('wpGoogleAnalytics', 'activatePlugin'));
