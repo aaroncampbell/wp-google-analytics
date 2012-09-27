@@ -38,11 +38,13 @@ define('WGA_DEBUG', false);
  */
 class wpGoogleAnalytics {
 
+	static $page_slug = 'wp-google-analytics';
+
 	/**
 	 * This adds the options page for this plugin to the Options page
 	 */
 	function admin_menu() {
-		add_options_page(__('Google Analytics'), __('Google Analytics'), 'manage_options', str_replace("\\", "/", __FILE__), array('wpGoogleAnalytics', 'options'));
+		add_options_page(__('Google Analytics'), __('Google Analytics'), 'manage_options', self::$page_slug, array('wpGoogleAnalytics', 'options'));
 	}
 
 	/**
