@@ -38,75 +38,128 @@ define('WGA_DEBUG', false);
  */
 class wpGoogleAnalytics {
 
+	static $page_slug = 'wp-google-analytics';
+
+	/**
+	 * Initialize the plugin
+	 */
+	function __construct() {
+		add_action( 'admin_init',               array( $this, 'admin_init' ) );
+		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
+		add_action( 'get_footer',               array( $this, 'insert_code' ) );
+		add_action( 'init',                     array( $this, 'start_ob' ) );
+		add_action( 'update_option_wga-roles',  array( $this, 'update_option' ), 10, 2 );
+	}
+
 	/**
 	 * This adds the options page for this plugin to the Options page
 	 */
 	function admin_menu() {
-		add_options_page(__('Google Analytics'), __('Google Analytics'), 'manage_options', str_replace("\\", "/", __FILE__), array('wpGoogleAnalytics', 'options'));
+		add_options_page(__('Google Analytics'), __('Google Analytics'), 'manage_options', self::$page_slug, array( $this, 'settings_view' ) );
+	}
+
+	/**
+	 * Register our settings
+	 */
+	function admin_init() {
+		register_setting( 'wga', 'wga', array( $this, 'sanitize_general_options' ) );
+
+		add_settings_section( 'wga_general', false, '__return_false', 'wga' );
+		add_settings_field( 'code', __( 'Google Analytics code:', 'wp-google-analytics' ), array( $this, 'field_code' ), 'wga', 'wga_general' );
+		add_settings_field( 'additional_items', __( 'Additional items to log:', 'wp-google-analytics' ), array( $this, 'field_additional_items' ), 'wga', 'wga_general' );
+		add_settings_field( 'do_not_track', __( 'Visits to ignore:', 'wp-google-analytics' ), array( $this, 'field_do_not_track' ), 'wga', 'wga_general' );
+	}
+
+	/**
+	 * Where the user adds their Google Analytics code
+	 */
+	function field_code() {
+		echo '<textarea name="wga[code]" id="wga-code" style="width:95%;" rows="10">' . esc_textarea( $this->get_options( 'code' ) ) . '</textarea>';
+		echo '<p class="description">' . __( 'Paste your Google Analytics code into the textarea.', 'wp-google-analytics' ) . '</p>';
+	}
+
+	/**
+	 * Option to log additional items
+	 */
+	function field_additional_items() {
+		$addtl_items = array(
+				'log_404s'       => __( 'Log 404 errors as /404/{url}?referrer={referrer}', 'wp-google-analytics' ),
+				'log_searches'   => __( 'Log searches as /search/{search}?referrer={referrer}', 'wp-google-analytics' ),
+				'log_outgoing'   => __( 'Log outgoing links as /outgoing/{url}?referrer={referrer}', 'wp-google-analytics' ),
+			);
+		foreach( $addtl_items as $id => $label ) {
+			echo '<label for="wga_' . $id . '">';
+			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />'; 
+			echo '&nbsp;&nbsp;' . $label;
+			echo '</label><br />';
+		}
+	}
+
+	function field_do_not_track() {
+		$do_not_track = array(
+				'ignore_admin_area'       => __( 'Do not log anything in the admin area', 'wp-google-analytics' ),
+			);
+		global $wp_roles;
+		foreach( $wp_roles->roles as $role => $role_info ) {
+			$do_not_track['ignore_role_' . $role] = sprintf( __( 'Do not log %s when logged in', 'wp-google-analytics' ), rtrim( $role_info['name'], 's' ) );
+		}
+		foreach( $do_not_track as $id => $label ) {
+			echo '<label for="wga_' . $id . '">';
+			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />'; 
+			echo '&nbsp;&nbsp;' . $label;
+			echo '</label><br />';
+		}
+	}
+
+	/**
+	 * Sanitize all of the options associated with the plugin
+	 */
+	function sanitize_general_options( $in ) {
+
+		$out = array();
+
+		// The actual tracking code
+		$out['code'] = strip_tags( $in['code'], '<script>' );
+
+		$checkbox_items = array(
+				// Additional items you can track
+				'log_404s',
+				'log_searches',
+				'log_outgoing',
+				// Things to ignore
+				'ignore_admin_area',
+			);
+		global $wp_roles;
+		foreach( $wp_roles->roles as $role => $role_info ) {
+			$checkbox_items[] = 'ignore_role_' . $role;
+		}
+		foreach( $checkbox_items as $checkbox_item ) {
+			if ( 'true' == $in[$checkbox_item] )
+				$out[$checkbox_item] = 'true';
+			else
+				$out[$checkbox_item] = 'false';
+		}
+
+		return $out;
 	}
 
 	/**
 	 * This is used to display the options page for this plugin
 	 */
-	function options() {
-		/**
-		 * @var WP_Roles
-		 */
-		global $wp_roles;
-
-		//Get our options
-		$wga = wpGoogleAnalytics::get_options();
+	function settings_view() {
 		//Echo debug info if needed
 		if (WGA_DEBUG) {
 			echo '<pre>',var_dump($wga),'</pre>';
-		}
-		//We will fill $roles with checkboxes to ignore each role
-		$roles = '';
-		foreach ($wp_roles->roles as $role=>$role_info) {
-			$checked = (isset($role_info['capabilities']['wga_no_track']) && $role_info['capabilities']['wga_no_track'])? ' checked="checked"':'';
-			$role_info['name'] .= (strtolower(substr($role_info['name'], -1)) != 's')? 's':'';
-			$roles .= "					<label for='wga_role_{$role}'><input type='checkbox' name='wga-roles[{$role}]' value='true' id='wga_role_{$role}'{$checked} /> ".__("Do not log {$role_info['name']} when logged in")."</label><br />";
 		}
 ?>
 		<div class="wrap">
 			<h2><?php _e('Google Analytics Options') ?></h2>
 			<form action="options.php" method="post" id="wp_google_analytics">
-				<?php wp_nonce_field('update-options'); ?>
-				<p>Google Maps for WordPress will allow you to easily add maps to your posts or pages.</p>
-				<table class="form-table">
-					<tr valign="top">
-						<th scope="row">
-							<label for="wga_code"><?php _e('Paste your <a href="http://analytics.google.com">Google Analytics</a> code into the textarea:'); ?></label>
-						</th>
-						<td>
-							<textarea name="wga[code]" id="wga_code" style="width:95%;" rows="10"><?php echo htmlentities($wga['code']); ?></textarea>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php _e('Additional items to log:') ?>
-						</th>
-						<td>
-							<label for="wga_log_404s"><input type="checkbox" name="wga[log_404s]" value="true" id="wga_log_404s"<?php checked('true', $wga['log_404s']); ?> /> <?php _e('Log 404 errors as /404/{url}?referrer={referrer}'); ?></label><br />
-							<label for="wga_log_searches"><input type="checkbox" name="wga[log_searches]" value="true" id="wga_log_searches"<?php checked('true', $wga['log_searches']); ?> /> <?php _e('Log searches as /search/{search}?referrer={referrer}'); ?></label><br />
-							<label for="wga_log_outgoing"><input type="checkbox" name="wga[log_outgoing]" value="true" id="wga_log_outgoing"<?php checked('true', $wga['log_outgoing']); ?> /> <?php _e('Log outgoing links as /outgoing/{url}?referrer={referrer}'); ?></label><br />
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php _e('Visits to ignore:') ?>
-						</th>
-						<td>
-							<label for="wga_ignore_admin_area"><input type="checkbox" name="wga[ignore_admin_area]" value="true" id="wga_ignore_admin_area"<?php checked('true', $wga['ignore_admin_area']); ?> /> <?php _e('Do not log anything in the admin area'); ?></label><br />
-<?php echo $roles; ?>
-						</td>
-					</tr>
-				</table>
-				<p class="submit">
-					<input type="submit" name="Submit" value="<?php _e('Update Options &raquo;'); ?>" />
-				</p>
-				<input type="hidden" name="action" value="update" />
-				<input type="hidden" name="page_options" value="wga,wga-roles" />
+				<?php 
+					settings_fields( 'wga' );
+					do_settings_sections( 'wga' );
+					submit_button( __( 'Update Options', 'wp-google-analytics' ) );
+				?>
 			</form>
 		</div>
 <?php
@@ -153,12 +206,17 @@ class wpGoogleAnalytics {
 		//get our plugin options
 		$wga = wpGoogleAnalytics::get_options();
 		//If the user's role has wga_no_track set to true, return without inserting code
-		if (current_user_can('wga_no_track')) {
-			$ret = "<!-- Google Analytics Plugin is set to ignore your user role -->\r\n";
-			if ($output) {
-				echo $ret;
+		if ( is_user_logged_in() ) {
+			$current_user = wp_get_current_user();
+			$role = array_shift( $current_user->roles );
+			if ( 'true' == $this->get_options( 'ignore_role_' . $role ) ) {
+				$ret = "<!-- Google Analytics Plugin is set to ignore your user role -->\r\n";
+				if ( $output ) {
+					echo $ret;
+					return;
+				}
+				return $ret;
 			}
-			return $ret;
 		}
 		//If the Google Analytics code has been set
 		if ($wga['code'] !== false) {
@@ -221,11 +279,21 @@ class wpGoogleAnalytics {
 	 * @return array of options, or option value
 	 */
 	function get_options($option = null) {
+
 		$o = get_option('wga');
+
 		if (isset($option)) {
+
 			if (isset($o[$option])) {
 				return $o[$option];
 			} else {
+				global $wp_roles;
+				// Backwards compat for when the tracking information was stored as a cap
+				$maybe_role = str_replace( 'ignore_role_', '', $option );
+				if ( isset( $wp_roles->roles[$maybe_role] ) ) {
+					if ( isset( $wp_roles->roles[$maybe_role]['capabilities']['wga_no_track'] ) && $wp_roles->roles[$maybe_role]['capabilities']['wga_no_track'] )
+						return 'true';
+				}
 				return false;
 			}
 		} else {
@@ -309,7 +377,7 @@ class wpGoogleAnalytics {
 		return $m[0];
 	}
 
-	function updateOption($oldValue, $newValue) {
+	function update_option($oldValue, $newValue) {
 		/**
 		 * @var WP_Roles
 		 */
@@ -335,12 +403,7 @@ class wpGoogleAnalytics {
 	}
 }
 
-/**
- * Add the necessary hooks
- */
-add_action('admin_menu', array('wpGoogleAnalytics','admin_menu'));
-add_action('get_footer', array('wpGoogleAnalytics', 'insert_code'));
-add_action('init', array('wpGoogleAnalytics', 'start_ob'));
-add_action('update_option_wga-roles', array('wpGoogleAnalytics', 'updateOption'), null, 2);
-add_action('activate_wp-google-analytics/wp-google-analytics.php', array('wpGoogleAnalytics', 'activatePlugin'));
-?>
+global $wp_google_analytics;
+$wp_google_analytics = new wpGoogleAnalytics;
+
+add_action( 'activate_wp-google-analytics/wp-google-analytics.php', array('wpGoogleAnalytics', 'activatePlugin'));
