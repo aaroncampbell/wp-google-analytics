@@ -226,12 +226,32 @@ class wpGoogleAnalytics {
 		if (is_admin() && (!isset($wga['ignore_admin_area']) || $wga['ignore_admin_area'] != 'false'))
 			return $this->output_or_return( "<!-- Your Google Analytics Plugin is set to ignore Admin area -->", $output );
 
-		$custom_vars = array();
+		$custom_vars = array(
+				"_gaq.push(['_setAccount', '{$tracking_id}']);",
+			);
+
+		$track = array();
+		if (is_404() && (!isset($wga['log_404s']) || $wga['log_404s'] != 'false')) {
+			//Set track for 404s, if it's a 404, and we are supposed to
+			$track['data'] = $_SERVER['REQUEST_URI'];
+			$track['code'] = '404';
+		} elseif (is_search() && (!isset($wga['log_searches']) || $wga['log_searches'] != 'false')) {
+			//Set track for searches, if it's a search, and we are supposed to
+			$track['data'] = $_REQUEST['s'];
+			$track['code'] = "search";
+		}
+
+		if ( ! empty( $track ) ) {
+			$track['url'] = $this->get_url( $track );
+			//adjust the code that we output, account for both types of tracking
+			$track['url'] = esc_js( str_replace( '&', '&amp;', $track['url'] ) );
+			$custom_vars[] = "_gaq.push(['_trackPageview','{$track['url']}']);";
+		} else {
+			$custom_vars[] = "_gaq.push(['_trackPageview']);";
+		}
 
 		$async_code = "<script type='text/javascript'>
 	var _gaq = _gaq || [];
-	_gaq.push(['_setAccount', '%tracking_id%']);
-	_gaq.push(['_trackPageview']);
 	%custom_vars%
 
 	(function() {
@@ -240,7 +260,6 @@ class wpGoogleAnalytics {
 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 	})();
 </script>";
-		$async_code = str_replace( '%tracking_id%', $tracking_id, $async_code );
 		$custom_vars_string = implode( "\r\n", $custom_vars );
 		$async_code = str_replace( '%custom_vars%', $custom_vars_string, $async_code );
 
