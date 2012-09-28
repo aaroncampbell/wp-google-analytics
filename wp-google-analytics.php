@@ -190,13 +190,27 @@ class wpGoogleAnalytics {
 	}
 
 	/**
+	 * Maybe output or return, depending on the context
+	 */
+	function output_or_return( $val, $maybe ) {
+		if ( $maybe )
+			echo $val . "\r\n";
+		else
+			return $val;
+	}
+
+	/**
 	 * This injects the Google Analytics code into the footer of the page.
 	 *
 	 * @param bool[optional] $output - defaults to true, false returns but does NOT echo the code
 	 */
-	function insert_code($output=true) {
+	function insert_code( $output = true ) {
 		//If $output is not a boolean false, set it to true (default)
 		$output = ($output !== false);
+
+		$tracking_id = $this->get_options( 'code' );
+		if ( empty( $tracking_id ) )
+			return $this->output_or_return( '<!-- Your Google Analytics Plugin is missing the tracking ID -->', $output );
 
 		//get our plugin options
 		$wga = wpGoogleAnalytics::get_options();
@@ -204,58 +218,34 @@ class wpGoogleAnalytics {
 		if ( is_user_logged_in() ) {
 			$current_user = wp_get_current_user();
 			$role = array_shift( $current_user->roles );
-			if ( 'true' == $this->get_options( 'ignore_role_' . $role ) ) {
-				$ret = "<!-- Google Analytics Plugin is set to ignore your user role -->\r\n";
-				if ( $output ) {
-					echo $ret;
-					return;
-				}
-				return $ret;
-			}
+			if ( 'true' == $this->get_options( 'ignore_role_' . $role ) )
+				return $this->output_or_return( "<!-- Google Analytics Plugin is set to ignore your user role -->", $output );
 		}
-		//If the Google Analytics code has been set
-		if ($wga['code'] !== false) {
 
-			//If $admin is true (we're in the admin_area), and we've been told to ignore_admin_area, return without inserting code
-			if (is_admin() && (!isset($wga['ignore_admin_area']) || $wga['ignore_admin_area'] != 'false')) {
-				$ret = "<!-- Your Google Analytics Plugin is set to ignore Admin area -->\r\n";
-				if ($output) {
-					echo $ret;
-				}
-				return $ret;
-			} elseif (is_404() && (!isset($wga['log_404s']) || $wga['log_404s'] != 'false')) {
-				//Set track for 404s, if it's a 404, and we are supposed to
-				$track['data'] = $_SERVER['REQUEST_URI'];
-				$track['code'] = '404';
-			} elseif (is_search() && (!isset($wga['log_searches']) || $wga['log_searches'] != 'false')) {
-				//Set track for searches, if it's a search, and we are supposed to
-				$track['data'] = $_REQUEST['s'];
-				$track['code'] = "search";
-			}
+		//If $admin is true (we're in the admin_area), and we've been told to ignore_admin_area, return without inserting code
+		if (is_admin() && (!isset($wga['ignore_admin_area']) || $wga['ignore_admin_area'] != 'false'))
+			return $this->output_or_return( "<!-- Your Google Analytics Plugin is set to ignore Admin area -->", $output );
 
-			//If we need to generate a special tracking URL
-			if (isset($track)) {
-				//get the tracking URL
-				$track['url'] = wpGoogleAnalytics::get_url($track);
+		$custom_vars = array();
 
-				//adjust the code that we output, account for both types of tracking
-				$track['url'] = str_replace('&', '&amp;', $track['url']);
-				$wga['code'] = str_replace("urchinTracker()","urchinTracker('{$track['url']}')", $wga['code']);
-				$wga['code'] = str_replace("pageTracker._trackPageview()","pageTracker._trackPageview('{$track['url']}')", $wga['code']);
-			}
-			//output the Google Analytics code
-			if ($output) {
-				echo $wga['code'];
-			}
-			return $wga['code'];
-		} else {
-			//If the Google Analytics code has not been set in admin area, return without inserting code
-			$ret = "<!-- You need to set up the Google Analytics Plugin -->\r\n";
-			if ($output) {
-				echo $ret;
-			}
-			return $ret;
-		}
+		$async_code = "<script type='text/javascript'>
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', '%tracking_id%']);
+	_gaq.push(['_trackPageview']);
+	%custom_vars%
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+</script>";
+		$async_code = str_replace( '%tracking_id%', $tracking_id, $async_code );
+		$custom_vars_string = implode( "\r\n", $custom_vars );
+		$async_code = str_replace( '%custom_vars%', $custom_vars_string, $async_code );
+
+		return $this->output_or_return( $async_code, $output );
+
 	}
 
 	/**
