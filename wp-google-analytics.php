@@ -64,6 +64,7 @@ class wpGoogleAnalytics {
 		add_settings_field( 'code', __( 'Google Analytics tracking ID:', 'wp-google-analytics' ), array( $this, 'field_code' ), 'wga', 'wga_general' );
 		add_settings_field( 'additional_items', __( 'Additional items to log:', 'wp-google-analytics' ), array( $this, 'field_additional_items' ), 'wga', 'wga_general' );
 		add_settings_field( 'do_not_track', __( 'Visits to ignore:', 'wp-google-analytics' ), array( $this, 'field_do_not_track' ), 'wga', 'wga_general' );
+		add_settings_field( 'custom_vars', __( 'Custom variables:', 'wp-google-analytics' ), array( $this, 'field_custom_variables' ), 'wga', 'wga_general' );
 	}
 
 	/**
@@ -87,6 +88,24 @@ class wpGoogleAnalytics {
 			echo '<label for="wga_' . $id . '">';
 			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />';
 			echo '&nbsp;&nbsp;' . $label;
+			echo '</label><br />';
+		}
+	}
+
+	/**
+	 * Define custom variables to be included in your tracking code
+	 */
+	function field_custom_variables() {
+		$custom_vars = $this->get_options( 'custom_vars' );
+
+		for ( $i = 1; $i <= 5; $i++ ) {
+			$name = ( isset( $custom_vars[$i]['name'] ) ) ? $custom_vars[$i]['name'] : '';
+			$value = ( isset( $custom_vars[$i]['value'] ) ) ? $custom_vars[$i]['value'] : '';
+			echo '<label for="wga_custom_var_' . $i . '_name"><strong>' . $i . ')</strong>&nbsp;' . __( 'Name', 'wp-google-analytics' ) . '&nbsp;';
+			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][name]" value="' . esc_attr( $name ) . '" />';
+			echo '</label>&nbsp;&nbsp;';
+			echo '<label for="wga_custom_var_' . $i . '_value">' . __( 'Value', 'wp-google-analytics' ) . '&nbsp;';
+			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][value]" value="' . esc_attr( $value ) . '" />';
 			echo '</label><br />';
 		}
 	}
@@ -137,6 +156,16 @@ class wpGoogleAnalytics {
 				$out[$checkbox_item] = 'true';
 			else
 				$out[$checkbox_item] = 'false';
+		}
+
+		// Custom variables
+		for( $i = 1; $i <= 5; $i++ ) {
+			foreach( array( 'name', 'value' ) as $key ) {
+				if ( isset( $in['custom_vars'][$i][$key] ) )
+					$out['custom_vars'][$i][$key] = sanitize_text_field( $in['custom_vars'][$i][$key] );
+				else
+					$out['custom_vars'][$i][$key] = '';
+			}
 		}
 
 		return $out;
