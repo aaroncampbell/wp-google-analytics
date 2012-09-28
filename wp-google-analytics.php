@@ -65,7 +65,7 @@ class wpGoogleAnalytics {
 		register_setting( 'wga', 'wga', array( $this, 'sanitize_general_options' ) );
 
 		add_settings_section( 'wga_general', false, '__return_false', 'wga' );
-		add_settings_field( 'code', __( 'Google Analytics code:', 'wp-google-analytics' ), array( $this, 'field_code' ), 'wga', 'wga_general' );
+		add_settings_field( 'code', __( 'Google Analytics tracking ID:', 'wp-google-analytics' ), array( $this, 'field_code' ), 'wga', 'wga_general' );
 		add_settings_field( 'additional_items', __( 'Additional items to log:', 'wp-google-analytics' ), array( $this, 'field_additional_items' ), 'wga', 'wga_general' );
 		add_settings_field( 'do_not_track', __( 'Visits to ignore:', 'wp-google-analytics' ), array( $this, 'field_do_not_track' ), 'wga', 'wga_general' );
 	}
@@ -74,8 +74,8 @@ class wpGoogleAnalytics {
 	 * Where the user adds their Google Analytics code
 	 */
 	function field_code() {
-		echo '<textarea name="wga[code]" id="wga-code" style="width:95%;" rows="10">' . esc_textarea( $this->get_options( 'code' ) ) . '</textarea>';
-		echo '<p class="description">' . __( 'Paste your Google Analytics code into the textarea.', 'wp-google-analytics' ) . '</p>';
+		echo '<input name="wga[code]" id="wga-code" type="text" value="' . esc_attr( $this->get_options( 'code' ) ) . '" />';
+		echo '<p class="description">' . __( 'Paste your Google Analytics tracking ID (e.g. "UA-XXXXXX-X") into the field.', 'wp-google-analytics' ) . '</p>';
 	}
 
 	/**
@@ -118,8 +118,11 @@ class wpGoogleAnalytics {
 
 		$out = array();
 
-		// The actual tracking code
-		$out['code'] = strip_tags( $in['code'], '<script>' );
+		// The actual tracking ID
+		if ( preg_match( '#UA-[\d-]+#', $in['code'], $matches ) )
+			$out['code'] = $matches[0];
+		else
+			$out['code'] = '';
 
 		$checkbox_items = array(
 				// Additional items you can track
@@ -285,7 +288,13 @@ class wpGoogleAnalytics {
 		if (isset($option)) {
 
 			if (isset($o[$option])) {
-				return $o[$option];
+				if ( 'code' == $option ) {
+					if ( preg_match( '#UA-[\d-]+#', $o[$option], $matches ) )
+						return $matches[0];
+					else
+						return '';
+				} else
+					return $o[$option];
 			} else {
 				global $wp_roles;
 				// Backwards compat for when the tracking information was stored as a cap
