@@ -3,12 +3,12 @@
  * Plugin Name: WP Google Analytics
  * Plugin URI: http://bluedogwebservices.com/wordpress-plugin/wp-google-analytics/
  * Description: Lets you use <a href="http://analytics.google.com">Google Analytics</a> to track your WordPress site statistics
- * Version: 1.2.5
+ * Version: 1.3-working
  * Author: Aaron D. Campbell
  * Author URI: http://ran.ge/
  */
 
-define('WGA_VERSION', '1.2.5');
+define('WGA_VERSION', '1.3-working');
 
 /*  Copyright 2006  Aaron D. Campbell  (email : wp_plugins@xavisys.com)
 
