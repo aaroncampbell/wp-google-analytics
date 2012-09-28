@@ -89,7 +89,7 @@ class wpGoogleAnalytics {
 			);
 		foreach( $addtl_items as $id => $label ) {
 			echo '<label for="wga_' . $id . '">';
-			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />'; 
+			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />';
 			echo '&nbsp;&nbsp;' . $label;
 			echo '</label><br />';
 		}
@@ -105,7 +105,7 @@ class wpGoogleAnalytics {
 		}
 		foreach( $do_not_track as $id => $label ) {
 			echo '<label for="wga_' . $id . '">';
-			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />'; 
+			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />';
 			echo '&nbsp;&nbsp;' . $label;
 			echo '</label><br />';
 		}
@@ -134,7 +134,7 @@ class wpGoogleAnalytics {
 			$checkbox_items[] = 'ignore_role_' . $role;
 		}
 		foreach( $checkbox_items as $checkbox_item ) {
-			if ( 'true' == $in[$checkbox_item] )
+			if ( isset( $in[$checkbox_item] ) && 'true' == $in[$checkbox_item] )
 				$out[$checkbox_item] = 'true';
 			else
 				$out[$checkbox_item] = 'false';
@@ -155,7 +155,7 @@ class wpGoogleAnalytics {
 		<div class="wrap">
 			<h2><?php _e('Google Analytics Options') ?></h2>
 			<form action="options.php" method="post" id="wp_google_analytics">
-				<?php 
+				<?php
 					settings_fields( 'wga' );
 					do_settings_sections( 'wga' );
 					submit_button( __( 'Update Options', 'wp-google-analytics' ) );
