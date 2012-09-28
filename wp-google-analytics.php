@@ -27,10 +27,6 @@ define('WGA_VERSION', '1.3-working');
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-//If this is set to true, extra info will be dumped to the browser.
-//ONLY do this if you really need it
-define('WGA_DEBUG', false);
-
 /**
  * wpGoogleAnalytics is the class that handles ALL of the plugin functionality.
  * It helps us avoid name collisions
@@ -150,10 +146,6 @@ class wpGoogleAnalytics {
 	 * This is used to display the options page for this plugin
 	 */
 	function settings_view() {
-		//Echo debug info if needed
-		if (WGA_DEBUG) {
-			echo '<pre>',var_dump($wga),'</pre>';
-		}
 ?>
 		<div class="wrap">
 			<h2><?php _e('Google Analytics Options') ?></h2>
@@ -223,10 +215,6 @@ class wpGoogleAnalytics {
 		}
 		//If the Google Analytics code has been set
 		if ($wga['code'] !== false) {
-			//Echo debug info if needed
-			if (WGA_DEBUG) {
-				echo '<pre>',var_dump($wga),'</pre>';
-			}
 
 			//If $admin is true (we're in the admin_area), and we've been told to ignore_admin_area, return without inserting code
 			if (is_admin() && (!isset($wga['ignore_admin_area']) || $wga['ignore_admin_area'] != 'false')) {
@@ -254,11 +242,6 @@ class wpGoogleAnalytics {
 				$track['url'] = str_replace('&', '&amp;', $track['url']);
 				$wga['code'] = str_replace("urchinTracker()","urchinTracker('{$track['url']}')", $wga['code']);
 				$wga['code'] = str_replace("pageTracker._trackPageview()","pageTracker._trackPageview('{$track['url']}')", $wga['code']);
-
-				//Echo debug info if needed
-				if (WGA_DEBUG) {
-					echo '<pre>',var_dump($track, $site_url),'</pre>';
-				}
 			}
 			//output the Google Analytics code
 			if ($output) {
