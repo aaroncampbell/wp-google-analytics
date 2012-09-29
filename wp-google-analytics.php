@@ -49,7 +49,8 @@ class wpGoogleAnalytics {
 		add_action( 'admin_init',               array( $this, 'admin_init' ) );
 		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
 		add_action( 'get_footer',               array( $this, 'insert_code' ) );
-		add_action( 'init',                     array( $this, 'start_ob' ) );
+		add_action( 'init',                     array( $this, 'track_outgoing' ) );
+		//add_action( 'init',                     array( $this, 'start_ob' ) );
 		add_action( 'update_option_wga-roles',  array( $this, 'update_option' ), 10, 2 );
 	}
 
@@ -258,7 +259,7 @@ class wpGoogleAnalytics {
 			return $this->_output_or_return( '<!-- Your Google Analytics Plugin is missing the tracking ID -->', $output );
 
 		//get our plugin options
-		$wga = wpGoogleAnalytics::_get_options();
+		$wga = $this->_get_options();
 		//If the user's role has wga_no_track set to true, return without inserting code
 		if ( is_user_logged_in() ) {
 			$current_user = wp_get_current_user();
@@ -272,8 +273,8 @@ class wpGoogleAnalytics {
 			return $this->_output_or_return( "<!-- Your Google Analytics Plugin is set to ignore Admin area -->", $output );
 
 		$custom_vars = array(
-				"_gaq.push(['_setAccount', '{$tracking_id}']);",
-			);
+			"_gaq.push(['_setAccount', '{$tracking_id}']);",
+		);
 
 		$track = array();
 		if (is_404() && (!isset($wga['log_404s']) || $wga['log_404s'] != 'false')) {
@@ -296,7 +297,7 @@ class wpGoogleAnalytics {
 		}
 
 		// Add custom variables specified by the user
-		foreach( $this->_get_options( 'custom_vars' ) as $i => $custom_var ) {
+		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
 			if ( empty( $custom_var['name'] ) )
 				continue;
 			$custom_vars[] = "_gaq.push(['_setCustomVar', " . intval( $i ) . ", '" . esc_js( $custom_var['name'] ) . "', '" . esc_js( $custom_var['value'] ) . "']);";
@@ -325,7 +326,7 @@ class wpGoogleAnalytics {
 	 * @param string[optional] $option - Name of options you want.  Do not use if you want ALL options
 	 * @return array of options, or option value
 	 */
-	private function _get_options($option = null) {
+	private function _get_options( $option = null, $default = false ) {
 
 		$o = get_option('wga');
 
@@ -340,14 +341,17 @@ class wpGoogleAnalytics {
 				} else
 					return $o[$option];
 			} else {
-				global $wp_roles;
-				// Backwards compat for when the tracking information was stored as a cap
-				$maybe_role = str_replace( 'ignore_role_', '', $option );
-				if ( isset( $wp_roles->roles[$maybe_role] ) ) {
-					if ( isset( $wp_roles->roles[$maybe_role]['capabilities']['wga_no_track'] ) && $wp_roles->roles[$maybe_role]['capabilities']['wga_no_track'] )
-						return 'true';
+				if ( 'ignore_role_' == substr( $option, 0, 12 ) ) {
+					global $wp_roles;
+					// Backwards compat for when the tracking information was stored as a cap
+					$maybe_role = str_replace( 'ignore_role_', '', $option );
+					if ( isset( $wp_roles->roles[$maybe_role] ) ) {
+						if ( isset( $wp_roles->roles[$maybe_role]['capabilities']['wga_no_track'] ) && $wp_roles->roles[$maybe_role]['capabilities']['wga_no_track'] )
+							return 'true';
+					}
+					return false;
 				}
-				return false;
+				return $default;
 			}
 		} else {
 			return $o;
@@ -355,79 +359,12 @@ class wpGoogleAnalytics {
 	}
 
 	/**
-	 * Start our output buffering with a callback, to grab all links
-	 *
-	 * @todo If there is a good way to tell if this is a feed, add a seperate option for tracking outgoings on feeds
+	 * If we track outgoing links, this will enqueue our javascript file
 	 */
-	public function start_ob() {
-		$log_outgoing = $this->_get_options('log_outgoing');
-		// Only start the output buffering if we care, and if it's NOT an XMLRPC REQUEST & NOT a tinyMCE JS file & NOT in the admin section
-		if (($log_outgoing == 'true' || $log_outgoing === false) && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && !is_admin() && stripos($_SERVER['REQUEST_URI'], 'wp-includes/js/tinymce') === false) {
-			ob_start(array('wpGoogleAnalytics', 'get_links'));
-		}
-	}
-
-	/**
-	 * Grab all links on the page.  If the code hasn't been inserted, we want to
-	 * insert it just before the </body> tag
-	 *
-	 * @param string $b - buffer contents
-	 * @return string - modified buffer contents
-	 */
-	public function get_links($b) {
-		$b = preg_replace_callback("/
-			<\s*a							# anchor tag
-				(?:\s[^>]*)?		# other attibutes that we don't need
-				\s*href\s*=\s*	# href (required)
-				(?:
-					\"([^\"]*)\"	# double quoted link
-				|
-					'([^']*)'			# single quoted link
-				|
-					([^'\"\s]*)		# unquoted link
-				)
-				(?:\s[^>]*)?		# other attibutes that we don't need
-				\s*>						#end of anchor tag
-			/isUx", array('wpGoogleAnalytics', 'handle_link'), $b);
-		return $b;
-	}
-
-	/**
-	 * If a link is outgoing, add an onclick that runs some Google JS with a
-	 * generated URL
-	 *
-	 * @param array $m - A match from the preg_replace_callback in self::get_links
-	 * @return string - modified andchor tag
-	 */
-	public function handle_link($m) {
-		$code = $this->_get_options('code');
-		//get our site url...used to see if the link is outgoing.  We can't use the wordpress setting, because wordpress might not be running at the document root.
-		$site_url = ( is_ssl() ? 'https://':'http://').$_SERVER['HTTP_HOST'];
-		$link = array_pop($m);
-		//If the link is outgoing, we modify $m[0] (the anchor tag)
-		if (preg_match("/^https?:\/\//i", $link) && (strpos(strtolower($link), strtolower($site_url)) !== 0 )) {
-			//get our custom link
-			$track['data'] = $link;
-			$track['code'] = 'outgoing';
-			$track['url'] = $this->_get_url($track);
-
-			// Check which version of the code the user is using, and user proper function
-			$function = (strpos($code, 'ga.js') !== false)? 'pageTracker._trackPageview': 'urchinTracker';
-			$onclick = "{$function}('{$track['url']}');";
-
-			//If there is already an onclick, add to the beginning of it (adding to the end will not work, because too many people leave off the ; from the last statement)
-			if (preg_match("/onclick\s*=\s*(['\"])/iUx",$m[0],$match)) {
-				//If the onclick uses single quotes, we use double...and vice versa
-				if ($match[1] == "'" ) {
-					$onclick = str_replace("'", '"', $onclick);
-				}
-				$m[0] = str_replace($match[0], $match[0].$onclick, $m[0]);
-			} else {
-				$m[0] = str_replace('>', " onclick=\"{$onclick}\">", $m[0]);
-			}
-		}
-		//return the anchor tag (modified or not)
-		return $m[0];
+	public function track_outgoing() {
+		$wga = $this->_get_options();
+		if ( 'true' == $wga['log_outgoing'] && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || $wga['ignore_admin_area'] == 'false') )
+			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.2' );
 	}
 
 	public function update_option($oldValue, $newValue) {
