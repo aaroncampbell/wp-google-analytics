@@ -99,7 +99,7 @@ class wpGoogleAnalytics {
 		$addtl_items = array(
 				'log_404s'       => __( 'Log 404 errors as /404/{url}?referrer={referrer}', 'wp-google-analytics' ),
 				'log_searches'   => __( 'Log searches as /search/{search}?referrer={referrer}', 'wp-google-analytics' ),
-				'log_outgoing'   => __( 'Log outgoing links as /outgoing/{url}?referrer={referrer}', 'wp-google-analytics' ),
+				'log_outgoing'   => __( 'Log outgoing links as events', 'wp-google-analytics' ),
 			);
 		foreach( $addtl_items as $id => $label ) {
 			echo '<label for="wga_' . $id . '">';
@@ -364,7 +364,7 @@ class wpGoogleAnalytics {
 	public function track_outgoing() {
 		$wga = $this->_get_options();
 		if ( 'true' == $wga['log_outgoing'] && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || $wga['ignore_admin_area'] == 'false') )
-			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.2' );
+			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.3' );
 	}
 
 	public function update_option($oldValue, $newValue) {
