@@ -3,12 +3,12 @@
  * Plugin Name: WP Google Analytics
  * Plugin URI: http://bluedogwebservices.com/wordpress-plugin/wp-google-analytics/
  * Description: Lets you use <a href="http://analytics.google.com">Google Analytics</a> to track your WordPress site statistics
- * Version: 1.2.5
+ * Version: 1.3-working
  * Author: Aaron D. Campbell
  * Author URI: http://ran.ge/
  */
 
-define('WGA_VERSION', '1.2.5');
+define('WGA_VERSION', '1.3-working');
 
 /*  Copyright 2006  Aaron D. Campbell  (email : wp_plugins@xavisys.com)
 
@@ -26,10 +26,6 @@ define('WGA_VERSION', '1.2.5');
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
-//If this is set to true, extra info will be dumped to the browser.
-//ONLY do this if you really need it
-define('WGA_DEBUG', false);
 
 /**
  * wpGoogleAnalytics is the class that handles ALL of the plugin functionality.
@@ -65,17 +61,18 @@ class wpGoogleAnalytics {
 		register_setting( 'wga', 'wga', array( $this, 'sanitize_general_options' ) );
 
 		add_settings_section( 'wga_general', false, '__return_false', 'wga' );
-		add_settings_field( 'code', __( 'Google Analytics code:', 'wp-google-analytics' ), array( $this, 'field_code' ), 'wga', 'wga_general' );
+		add_settings_field( 'code', __( 'Google Analytics tracking ID:', 'wp-google-analytics' ), array( $this, 'field_code' ), 'wga', 'wga_general' );
 		add_settings_field( 'additional_items', __( 'Additional items to log:', 'wp-google-analytics' ), array( $this, 'field_additional_items' ), 'wga', 'wga_general' );
 		add_settings_field( 'do_not_track', __( 'Visits to ignore:', 'wp-google-analytics' ), array( $this, 'field_do_not_track' ), 'wga', 'wga_general' );
+		add_settings_field( 'custom_vars', __( 'Custom variables:', 'wp-google-analytics' ), array( $this, 'field_custom_variables' ), 'wga', 'wga_general' );
 	}
 
 	/**
 	 * Where the user adds their Google Analytics code
 	 */
 	function field_code() {
-		echo '<textarea name="wga[code]" id="wga-code" style="width:95%;" rows="10">' . esc_textarea( $this->get_options( 'code' ) ) . '</textarea>';
-		echo '<p class="description">' . __( 'Paste your Google Analytics code into the textarea.', 'wp-google-analytics' ) . '</p>';
+		echo '<input name="wga[code]" id="wga-code" type="text" value="' . esc_attr( $this->get_options( 'code' ) ) . '" />';
+		echo '<p class="description">' . __( 'Paste your Google Analytics tracking ID (e.g. "UA-XXXXXX-X") into the field.', 'wp-google-analytics' ) . '</p>';
 	}
 
 	/**
@@ -91,6 +88,24 @@ class wpGoogleAnalytics {
 			echo '<label for="wga_' . $id . '">';
 			echo '<input id="wga_' . $id . '" type="checkbox" name="wga[' . $id . ']" value="true" ' . checked( 'true', $this->get_options( $id ), false ) . ' />';
 			echo '&nbsp;&nbsp;' . $label;
+			echo '</label><br />';
+		}
+	}
+
+	/**
+	 * Define custom variables to be included in your tracking code
+	 */
+	function field_custom_variables() {
+		$custom_vars = $this->get_options( 'custom_vars' );
+
+		for ( $i = 1; $i <= 5; $i++ ) {
+			$name = ( isset( $custom_vars[$i]['name'] ) ) ? $custom_vars[$i]['name'] : '';
+			$value = ( isset( $custom_vars[$i]['value'] ) ) ? $custom_vars[$i]['value'] : '';
+			echo '<label for="wga_custom_var_' . $i . '_name"><strong>' . $i . ')</strong>&nbsp;' . __( 'Name', 'wp-google-analytics' ) . '&nbsp;';
+			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][name]" value="' . esc_attr( $name ) . '" />';
+			echo '</label>&nbsp;&nbsp;';
+			echo '<label for="wga_custom_var_' . $i . '_value">' . __( 'Value', 'wp-google-analytics' ) . '&nbsp;';
+			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][value]" value="' . esc_attr( $value ) . '" />';
 			echo '</label><br />';
 		}
 	}
@@ -118,8 +133,11 @@ class wpGoogleAnalytics {
 
 		$out = array();
 
-		// The actual tracking code
-		$out['code'] = strip_tags( $in['code'], '<script>' );
+		// The actual tracking ID
+		if ( preg_match( '#UA-[\d-]+#', $in['code'], $matches ) )
+			$out['code'] = $matches[0];
+		else
+			$out['code'] = '';
 
 		$checkbox_items = array(
 				// Additional items you can track
@@ -140,6 +158,16 @@ class wpGoogleAnalytics {
 				$out[$checkbox_item] = 'false';
 		}
 
+		// Custom variables
+		for( $i = 1; $i <= 5; $i++ ) {
+			foreach( array( 'name', 'value' ) as $key ) {
+				if ( isset( $in['custom_vars'][$i][$key] ) )
+					$out['custom_vars'][$i][$key] = sanitize_text_field( $in['custom_vars'][$i][$key] );
+				else
+					$out['custom_vars'][$i][$key] = '';
+			}
+		}
+
 		return $out;
 	}
 
@@ -147,10 +175,6 @@ class wpGoogleAnalytics {
 	 * This is used to display the options page for this plugin
 	 */
 	function settings_view() {
-		//Echo debug info if needed
-		if (WGA_DEBUG) {
-			echo '<pre>',var_dump($wga),'</pre>';
-		}
 ?>
 		<div class="wrap">
 			<h2><?php _e('Google Analytics Options') ?></h2>
@@ -195,13 +219,27 @@ class wpGoogleAnalytics {
 	}
 
 	/**
+	 * Maybe output or return, depending on the context
+	 */
+	function output_or_return( $val, $maybe ) {
+		if ( $maybe )
+			echo $val . "\r\n";
+		else
+			return $val;
+	}
+
+	/**
 	 * This injects the Google Analytics code into the footer of the page.
 	 *
 	 * @param bool[optional] $output - defaults to true, false returns but does NOT echo the code
 	 */
-	function insert_code($output=true) {
+	function insert_code( $output = true ) {
 		//If $output is not a boolean false, set it to true (default)
 		$output = ($output !== false);
+
+		$tracking_id = $this->get_options( 'code' );
+		if ( empty( $tracking_id ) )
+			return $this->output_or_return( '<!-- Your Google Analytics Plugin is missing the tracking ID -->', $output );
 
 		//get our plugin options
 		$wga = wpGoogleAnalytics::get_options();
@@ -209,67 +247,60 @@ class wpGoogleAnalytics {
 		if ( is_user_logged_in() ) {
 			$current_user = wp_get_current_user();
 			$role = array_shift( $current_user->roles );
-			if ( 'true' == $this->get_options( 'ignore_role_' . $role ) ) {
-				$ret = "<!-- Google Analytics Plugin is set to ignore your user role -->\r\n";
-				if ( $output ) {
-					echo $ret;
-					return;
-				}
-				return $ret;
-			}
+			if ( 'true' == $this->get_options( 'ignore_role_' . $role ) )
+				return $this->output_or_return( "<!-- Google Analytics Plugin is set to ignore your user role -->", $output );
 		}
-		//If the Google Analytics code has been set
-		if ($wga['code'] !== false) {
-			//Echo debug info if needed
-			if (WGA_DEBUG) {
-				echo '<pre>',var_dump($wga),'</pre>';
-			}
 
-			//If $admin is true (we're in the admin_area), and we've been told to ignore_admin_area, return without inserting code
-			if (is_admin() && (!isset($wga['ignore_admin_area']) || $wga['ignore_admin_area'] != 'false')) {
-				$ret = "<!-- Your Google Analytics Plugin is set to ignore Admin area -->\r\n";
-				if ($output) {
-					echo $ret;
-				}
-				return $ret;
-			} elseif (is_404() && (!isset($wga['log_404s']) || $wga['log_404s'] != 'false')) {
-				//Set track for 404s, if it's a 404, and we are supposed to
-				$track['data'] = $_SERVER['REQUEST_URI'];
-				$track['code'] = '404';
-			} elseif (is_search() && (!isset($wga['log_searches']) || $wga['log_searches'] != 'false')) {
-				//Set track for searches, if it's a search, and we are supposed to
-				$track['data'] = $_REQUEST['s'];
-				$track['code'] = "search";
-			}
+		//If $admin is true (we're in the admin_area), and we've been told to ignore_admin_area, return without inserting code
+		if (is_admin() && (!isset($wga['ignore_admin_area']) || $wga['ignore_admin_area'] != 'false'))
+			return $this->output_or_return( "<!-- Your Google Analytics Plugin is set to ignore Admin area -->", $output );
 
-			//If we need to generate a special tracking URL
-			if (isset($track)) {
-				//get the tracking URL
-				$track['url'] = wpGoogleAnalytics::get_url($track);
+		$custom_vars = array(
+				"_gaq.push(['_setAccount', '{$tracking_id}']);",
+			);
 
-				//adjust the code that we output, account for both types of tracking
-				$track['url'] = str_replace('&', '&amp;', $track['url']);
-				$wga['code'] = str_replace("urchinTracker()","urchinTracker('{$track['url']}')", $wga['code']);
-				$wga['code'] = str_replace("pageTracker._trackPageview()","pageTracker._trackPageview('{$track['url']}')", $wga['code']);
+		$track = array();
+		if (is_404() && (!isset($wga['log_404s']) || $wga['log_404s'] != 'false')) {
+			//Set track for 404s, if it's a 404, and we are supposed to
+			$track['data'] = $_SERVER['REQUEST_URI'];
+			$track['code'] = '404';
+		} elseif (is_search() && (!isset($wga['log_searches']) || $wga['log_searches'] != 'false')) {
+			//Set track for searches, if it's a search, and we are supposed to
+			$track['data'] = $_REQUEST['s'];
+			$track['code'] = "search";
+		}
 
-				//Echo debug info if needed
-				if (WGA_DEBUG) {
-					echo '<pre>',var_dump($track, $site_url),'</pre>';
-				}
-			}
-			//output the Google Analytics code
-			if ($output) {
-				echo $wga['code'];
-			}
-			return $wga['code'];
+		if ( ! empty( $track ) ) {
+			$track['url'] = $this->get_url( $track );
+			//adjust the code that we output, account for both types of tracking
+			$track['url'] = esc_js( str_replace( '&', '&amp;', $track['url'] ) );
+			$custom_vars[] = "_gaq.push(['_trackPageview','{$track['url']}']);";
 		} else {
-			//If the Google Analytics code has not been set in admin area, return without inserting code
-			$ret = "<!-- You need to set up the Google Analytics Plugin -->\r\n";
-			if ($output) {
-				echo $ret;
-			}
-			return $ret;
+			$custom_vars[] = "_gaq.push(['_trackPageview']);";
 		}
+
+		// Add custom variables specified by the user
+		foreach( $this->get_options( 'custom_vars' ) as $i => $custom_var ) {
+			if ( empty( $custom_var['name'] ) )
+				continue;
+			$custom_vars[] = "_gaq.push(['_setCustomVar', " . intval( $i ) . ", '" . esc_js( $custom_var['name'] ) . "', '" . esc_js( $custom_var['value'] ) . "']);";
+		}
+
+		$async_code = "<script type='text/javascript'>
+	var _gaq = _gaq || [];
+	%custom_vars%
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+</script>";
+		$custom_vars_string = implode( "\r\n", $custom_vars );
+		$async_code = str_replace( '%custom_vars%', $custom_vars_string, $async_code );
+
+		return $this->output_or_return( $async_code, $output );
+
 	}
 
 	/**
@@ -285,7 +316,13 @@ class wpGoogleAnalytics {
 		if (isset($option)) {
 
 			if (isset($o[$option])) {
-				return $o[$option];
+				if ( 'code' == $option ) {
+					if ( preg_match( '#UA-[\d-]+#', $o[$option], $matches ) )
+						return $matches[0];
+					else
+						return '';
+				} else
+					return $o[$option];
 			} else {
 				global $wp_roles;
 				// Backwards compat for when the tracking information was stored as a cap
