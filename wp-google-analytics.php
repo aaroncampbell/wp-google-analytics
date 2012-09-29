@@ -444,18 +444,7 @@ class wpGoogleAnalytics {
 				$wp_roles->add_cap($role, 'wga_no_track', false);
 		}
 	}
-
-	public function activatePlugin() {
-		// If the wga-id has not been generated, generate one and store it.
-		$o = get_option('wga');
-		if (!isset($o['user_agreed_to_send_system_information'])) {
-			$o['user_agreed_to_send_system_information'] = 'true';
-			update_option('wga', $o);
-		}
-	}
 }
 
 global $wp_google_analytics;
 $wp_google_analytics = wpGoogleAnalytics::get_instance();
-
-add_action( 'activate_wp-google-analytics/wp-google-analytics.php', array('wpGoogleAnalytics', 'activatePlugin'));
