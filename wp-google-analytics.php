@@ -279,6 +279,13 @@ class wpGoogleAnalytics {
 			$custom_vars[] = "_gaq.push(['_trackPageview']);";
 		}
 
+		// Add custom variables specified by the user
+		foreach( $this->get_options( 'custom_vars' ) as $i => $custom_var ) {
+			if ( empty( $custom_var['name'] ) )
+				continue;
+			$custom_vars[] = "_gaq.push(['_setCustomVar', " . intval( $i ) . ", '" . esc_js( $custom_var['name'] ) . "', '" . esc_js( $custom_var['value'] ) . "']);";
+		}
+
 		$async_code = "<script type='text/javascript'>
 	var _gaq = _gaq || [];
 	%custom_vars%
