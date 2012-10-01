@@ -113,14 +113,29 @@ class wpGoogleAnalytics {
 	public function field_custom_variables() {
 		$custom_vars = $this->_get_options( 'custom_vars' );
 
+		$scope_options = array(
+				0 => __( 'Default', 'wp-google-analytics' ),
+				1 => __( 'Visitor', 'wp-google-analytics' ),
+				2 => __( 'Session', 'wp-google-analytics' ),
+				3 => __( 'Page', 'wp-google-analytics' ),
+			);
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$name = ( isset( $custom_vars[$i]['name'] ) ) ? $custom_vars[$i]['name'] : '';
 			$value = ( isset( $custom_vars[$i]['value'] ) ) ? $custom_vars[$i]['value'] : '';
+			$scope = ( isset( $custom_vars[$i]['scope'] ) ) ? $custom_vars[$i]['scope'] : 0;
 			echo '<label for="wga_custom_var_' . $i . '_name"><strong>' . $i . ')</strong>&nbsp;' . __( 'Name', 'wp-google-analytics' ) . '&nbsp;';
 			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][name]" value="' . esc_attr( $name ) . '" />';
 			echo '</label>&nbsp;&nbsp;';
 			echo '<label for="wga_custom_var_' . $i . '_value">' . __( 'Value', 'wp-google-analytics' ) . '&nbsp;';
 			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][value]" value="' . esc_attr( $value ) . '" />';
+			echo '</label>&nbsp;&nbsp;';
+			echo '<label for="wga_custom_var_' . $i . '_scope">' . __( 'Scope', 'wp-google-analytics' ) . '&nbsp;';
+			echo '<select id="wga_custom_var_' . $i . '_scope" name="wga[custom_vars][' . $i . '][scope]">';
+			foreach( $scope_options as $key => $label ) {
+				echo '<option value="' . $key . '" ' . selected( $scope, $key, false ) . '>';
+				echo $label . '</option>';
+			}
+			echo '</select>';
 			echo '</label><br />';
 		}
 	}
@@ -175,7 +190,7 @@ class wpGoogleAnalytics {
 
 		// Custom variables
 		for( $i = 1; $i <= 5; $i++ ) {
-			foreach( array( 'name', 'value' ) as $key ) {
+			foreach( array( 'name', 'value', 'scope' ) as $key ) {
 				if ( isset( $in['custom_vars'][$i][$key] ) )
 					$out['custom_vars'][$i][$key] = sanitize_text_field( $in['custom_vars'][$i][$key] );
 				else
@@ -298,7 +313,15 @@ class wpGoogleAnalytics {
 		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
 			if ( empty( $custom_var['name'] ) )
 				continue;
-			$custom_vars[] = "_gaq.push(['_setCustomVar', " . intval( $i ) . ", '" . esc_js( $custom_var['name'] ) . "', '" . esc_js( $custom_var['value'] ) . "']);";
+			$atts = array(
+					"'_setCustomVar'",
+					intval( $i ),
+					"'" . esc_js( $custom_var['name'] ) . "'",
+					"'" . esc_js( $custom_var['value'] ) . "'",
+				);
+			if ( $custom_var['scope'] )
+				$atts[] = intval( $custom_var['scope'] );
+			$custom_vars[] = "_gaq.push([" . implode( ', ', $atts ) . "]);";
 		}
 
 		$async_code = "<script type='text/javascript'>
