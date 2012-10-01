@@ -50,8 +50,6 @@ class wpGoogleAnalytics {
 		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
 		add_action( 'get_footer',               array( $this, 'insert_code' ) );
 		add_action( 'init',                     array( $this, 'track_outgoing' ) );
-		//add_action( 'init',                     array( $this, 'start_ob' ) );
-		add_action( 'update_option_wga-roles',  array( $this, 'update_option' ), 10, 2 );
 	}
 
  	/**
@@ -367,20 +365,6 @@ class wpGoogleAnalytics {
 			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.3' );
 	}
 
-	public function update_option($oldValue, $newValue) {
-		/**
-		 * @var WP_Roles
-		 */
-		global $wp_roles;
-
-		//Add/remove wga_no_track capability for each role
-		foreach ($wp_roles->roles as $role=>$role_info) {
-			if (isset($newValue[$role]) && $newValue[$role] == 'true')
-				$wp_roles->add_cap($role, 'wga_no_track', true);
-			else
-				$wp_roles->add_cap($role, 'wga_no_track', false);
-		}
-	}
 }
 
 global $wp_google_analytics;
