@@ -95,8 +95,8 @@ class wpGoogleAnalytics {
 	 */
 	public function field_additional_items() {
 		$addtl_items = array(
-				'log_404s'       => __( 'Log 404 errors as /404/{url}?referrer={referrer}', 'wp-google-analytics' ),
-				'log_searches'   => __( 'Log searches as /search/{search}?referrer={referrer}', 'wp-google-analytics' ),
+				'log_404s'       => __( 'Log 404 errors as events', 'wp-google-analytics' ),
+				'log_searches'   => sprintf( __( 'Log searches as /search/{search}?referrer={referrer} (<a href="%s">deprecated</a>)', 'wp-google-analytics' ), 'http://wordpress.org/extend/plugins/wp-google-analytics/faq/' ),
 				'log_outgoing'   => __( 'Log outgoing links as events', 'wp-google-analytics' ),
 			);
 		foreach( $addtl_items as $id => $label ) {
@@ -291,9 +291,8 @@ class wpGoogleAnalytics {
 
 		$track = array();
 		if (is_404() && (!isset($wga['log_404s']) || $wga['log_404s'] != 'false')) {
-			//Set track for 404s, if it's a 404, and we are supposed to
-			$track['data'] = $_SERVER['REQUEST_URI'];
-			$track['code'] = '404';
+			// This is a 404 and we are supposed to track them
+			$custom_vars[] = "_gaq.push( [ '_trackEvent', '404', document.location.href, document.referrer ] );";
 		} elseif (is_search() && (!isset($wga['log_searches']) || $wga['log_searches'] != 'false')) {
 			//Set track for searches, if it's a search, and we are supposed to
 			$track['data'] = $_REQUEST['s'];

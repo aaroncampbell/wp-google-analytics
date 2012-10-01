@@ -31,6 +31,15 @@ WP Google Analytics has a config page under the settings tab in the admin area
 of your site.  You can paste your tracking code from Google into the textarea on
 this page.
 
+= How do I track searches? =
+
+WP Google Analytics used to help you track site searches before Google Analytics
+started doing this natively.  While we still support tracking searches for
+backwards compatibility, this feature has been deprecated and will eventually be
+removed.  To track searches in Google Analytics follow this
+<a href="http://support.google.com/analytics/bin/answer.py?hl=en&answer=1012264">Google support article</a>.
+WordPress uses 's' as the query parameter.
+
 = Can't I just paste the Google Analytics code into my template file? =
 
 Absolutely, however in order to get a better idea of what is going on with your
