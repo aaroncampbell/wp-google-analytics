@@ -44,6 +44,9 @@ easily do all these things.
 
 ## Changelog
 
+### 1.3.1
+* Fixed custom variables not being tracked
+
 ### 1.3.0
 * Refactored to use settings API - Props danielbachhuber
 * Convert to singleton and instatiate class

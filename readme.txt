@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: analytics, google, google analytics
 Requires at least: 3.1
 Tested up to: 3.5
-Stable tag: 1.2.5
+Stable tag: 1.3.1
 
 Lets you use <a href="http://analytics.google.com">Google Analytics</a> to track your WordPress site statistics
 
@@ -49,10 +49,16 @@ easily do all these things.
 
 == Upgrade Notice ==
 
+= 1.3.1 =
+Fix for custom variables not being tracked
+
 = 1.3.0 =
 Move to using events for tracking 404s and outgoing links and add support for custom variables
 
 == Changelog ==
+
+= 1.3.1 =
+* Fixed custom variables not being tracked
 
 = 1.3.0 =
 * Refactored to use settings API - Props danielbachhuber
