@@ -296,6 +296,21 @@ class wpGoogleAnalytics {
 			"_gaq.push(['_setAccount', '{$tracking_id}']);",
 		);
 
+		// Add custom variables specified by the user
+		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
+			if ( empty( $custom_var['name'] ) || empty( $custom_var['value'] ) )
+				continue;
+			$atts = array(
+					"'_setCustomVar'",
+					intval( $i ),
+					"'" . esc_js( $custom_var['name'] ) . "'",
+					"'" . esc_js( $custom_var['value'] ) . "'",
+				);
+			if ( $custom_var['scope'] )
+				$atts[] = intval( $custom_var['scope'] );
+			$custom_vars[] = "_gaq.push([" . implode( ', ', $atts ) . "]);";
+		}
+
 		$track = array();
 		if (is_404() && (!isset($wga['log_404s']) || $wga['log_404s'] != 'false')) {
 			// This is a 404 and we are supposed to track them
@@ -313,21 +328,6 @@ class wpGoogleAnalytics {
 			$custom_vars[] = "_gaq.push(['_trackPageview','{$track['url']}']);";
 		} else {
 			$custom_vars[] = "_gaq.push(['_trackPageview']);";
-		}
-
-		// Add custom variables specified by the user
-		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
-			if ( empty( $custom_var['name'] ) || empty( $custom_var['value'] ) )
-				continue;
-			$atts = array(
-					"'_setCustomVar'",
-					intval( $i ),
-					"'" . esc_js( $custom_var['name'] ) . "'",
-					"'" . esc_js( $custom_var['value'] ) . "'",
-				);
-			if ( $custom_var['scope'] )
-				$atts[] = intval( $custom_var['scope'] );
-			$custom_vars[] = "_gaq.push([" . implode( ', ', $atts ) . "]);";
 		}
 
 		$async_code = "<script type='text/javascript'>
