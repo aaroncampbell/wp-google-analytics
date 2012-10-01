@@ -6,6 +6,8 @@
  * Version: 1.3-working
  * Author: Aaron D. Campbell
  * Author URI: http://ran.ge/
+ * License: GPLv2 or later
+ * Text Domain: wp-google-analytics
  */
 
 define('WGA_VERSION', '1.3-working');
@@ -46,6 +48,7 @@ class wpGoogleAnalytics {
 	 * @return void
 	 */
 	private function __construct() {
+		add_filter( 'init',                     array( $this, 'init_locale' ) );
 		add_action( 'admin_init',               array( $this, 'admin_init' ) );
 		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
 		add_action( 'get_footer',               array( $this, 'insert_code' ) );
@@ -62,11 +65,15 @@ class wpGoogleAnalytics {
 		return self::$instance;
 	}
 
+	public function init_locale() {
+		load_plugin_textdomain( 'jetpack', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+	}
+
 	/**
 	 * This adds the options page for this plugin to the Options page
 	 */
 	public function admin_menu() {
-		add_options_page(__('Google Analytics'), __('Google Analytics'), 'manage_options', self::$page_slug, array( $this, 'settings_view' ) );
+		add_options_page(__('Google Analytics', 'wp-google-analytics'), __('Google Analytics', 'wp-google-analytics'), 'manage_options', self::$page_slug, array( $this, 'settings_view' ) );
 	}
 
 	/**
@@ -207,7 +214,7 @@ class wpGoogleAnalytics {
 	public function settings_view() {
 ?>
 		<div class="wrap">
-			<h2><?php _e('Google Analytics Options') ?></h2>
+			<h2><?php _e('Google Analytics Options', 'wp-google-analytics') ?></h2>
 			<form action="options.php" method="post" id="wp_google_analytics">
 				<?php
 					settings_fields( 'wga' );

@@ -8,10 +8,10 @@ Lets you use <a href="http://analytics.google.com">Google Analytics</a> to track
 your WordPress site statistics.  It is easily configurable to:
 
 * Not log anything in the admin area
-* Log 404 errors as /404/{url}?referrer={referrer}
-* Log searches as /search/{search}?referrer={referrer}
-* Log outgoing links as /outgoing/{url}?referrer={referrer}
+* Log 404 errors as events
+* Log outgoing links as events
 * Not log any user roles (administrators, editors, authors, etc)
+* Use custom variables
 
 ## Installation
 
@@ -43,6 +43,14 @@ easily do all these things.
 
 
 ## Changelog
+
+### 1.3.0
+* Refactored to use settings API - Props danielbachhuber
+* Convert to singleton and instatiate class
+* Convert tracking code field to ID, keeping backwards compat - Props danielbachhuber
+* Custom variable support - Props danielbachhuber
+* Track outgoing links and 404s as events
+* Deprecated tracking searches
 
 ### 1.2.5
 * Fixed some notices. Props westi
