@@ -311,7 +311,7 @@ class wpGoogleAnalytics {
 
 		// Add custom variables specified by the user
 		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
-			if ( empty( $custom_var['name'] ) )
+			if ( empty( $custom_var['name'] ) || empty( $custom_var['value'] ) )
 				continue;
 			$atts = array(
 					"'_setCustomVar'",
