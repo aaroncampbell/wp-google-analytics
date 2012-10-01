@@ -49,7 +49,7 @@ class wpGoogleAnalytics {
 		add_action( 'admin_init',               array( $this, 'admin_init' ) );
 		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
 		add_action( 'get_footer',               array( $this, 'insert_code' ) );
-		add_action( 'init',                     array( $this, 'track_outgoing' ) );
+		add_action( 'wp_enqueue_scripts',       array( $this, 'track_outgoing' ) );
 	}
 
  	/**
