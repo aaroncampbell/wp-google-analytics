@@ -49,9 +49,7 @@ class wpGoogleAnalytics {
 		add_action( 'admin_init',               array( $this, 'admin_init' ) );
 		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
 		add_action( 'get_footer',               array( $this, 'insert_code' ) );
-		add_action( 'init',                     array( $this, 'track_outgoing' ) );
-		//add_action( 'init',                     array( $this, 'start_ob' ) );
-		add_action( 'update_option_wga-roles',  array( $this, 'update_option' ), 10, 2 );
+		add_action( 'wp_enqueue_scripts',       array( $this, 'track_outgoing' ) );
 	}
 
  	/**
@@ -115,14 +113,29 @@ class wpGoogleAnalytics {
 	public function field_custom_variables() {
 		$custom_vars = $this->_get_options( 'custom_vars' );
 
+		$scope_options = array(
+				0 => __( 'Default', 'wp-google-analytics' ),
+				1 => __( 'Visitor', 'wp-google-analytics' ),
+				2 => __( 'Session', 'wp-google-analytics' ),
+				3 => __( 'Page', 'wp-google-analytics' ),
+			);
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$name = ( isset( $custom_vars[$i]['name'] ) ) ? $custom_vars[$i]['name'] : '';
 			$value = ( isset( $custom_vars[$i]['value'] ) ) ? $custom_vars[$i]['value'] : '';
+			$scope = ( isset( $custom_vars[$i]['scope'] ) ) ? $custom_vars[$i]['scope'] : 0;
 			echo '<label for="wga_custom_var_' . $i . '_name"><strong>' . $i . ')</strong>&nbsp;' . __( 'Name', 'wp-google-analytics' ) . '&nbsp;';
 			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][name]" value="' . esc_attr( $name ) . '" />';
 			echo '</label>&nbsp;&nbsp;';
 			echo '<label for="wga_custom_var_' . $i . '_value">' . __( 'Value', 'wp-google-analytics' ) . '&nbsp;';
 			echo '<input id="wga_' . $i . '" type="text" name="wga[custom_vars][' . $i . '][value]" value="' . esc_attr( $value ) . '" />';
+			echo '</label>&nbsp;&nbsp;';
+			echo '<label for="wga_custom_var_' . $i . '_scope">' . __( 'Scope', 'wp-google-analytics' ) . '&nbsp;';
+			echo '<select id="wga_custom_var_' . $i . '_scope" name="wga[custom_vars][' . $i . '][scope]">';
+			foreach( $scope_options as $key => $label ) {
+				echo '<option value="' . $key . '" ' . selected( $scope, $key, false ) . '>';
+				echo $label . '</option>';
+			}
+			echo '</select>';
 			echo '</label><br />';
 		}
 	}
@@ -177,7 +190,7 @@ class wpGoogleAnalytics {
 
 		// Custom variables
 		for( $i = 1; $i <= 5; $i++ ) {
-			foreach( array( 'name', 'value' ) as $key ) {
+			foreach( array( 'name', 'value', 'scope' ) as $key ) {
 				if ( isset( $in['custom_vars'][$i][$key] ) )
 					$out['custom_vars'][$i][$key] = sanitize_text_field( $in['custom_vars'][$i][$key] );
 				else
@@ -298,9 +311,17 @@ class wpGoogleAnalytics {
 
 		// Add custom variables specified by the user
 		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
-			if ( empty( $custom_var['name'] ) )
+			if ( empty( $custom_var['name'] ) || empty( $custom_var['value'] ) )
 				continue;
-			$custom_vars[] = "_gaq.push(['_setCustomVar', " . intval( $i ) . ", '" . esc_js( $custom_var['name'] ) . "', '" . esc_js( $custom_var['value'] ) . "']);";
+			$atts = array(
+					"'_setCustomVar'",
+					intval( $i ),
+					"'" . esc_js( $custom_var['name'] ) . "'",
+					"'" . esc_js( $custom_var['value'] ) . "'",
+				);
+			if ( $custom_var['scope'] )
+				$atts[] = intval( $custom_var['scope'] );
+			$custom_vars[] = "_gaq.push([" . implode( ', ', $atts ) . "]);";
 		}
 
 		$async_code = "<script type='text/javascript'>
@@ -367,20 +388,6 @@ class wpGoogleAnalytics {
 			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.3' );
 	}
 
-	public function update_option($oldValue, $newValue) {
-		/**
-		 * @var WP_Roles
-		 */
-		global $wp_roles;
-
-		//Add/remove wga_no_track capability for each role
-		foreach ($wp_roles->roles as $role=>$role_info) {
-			if (isset($newValue[$role]) && $newValue[$role] == 'true')
-				$wp_roles->add_cap($role, 'wga_no_track', true);
-			else
-				$wp_roles->add_cap($role, 'wga_no_track', false);
-		}
-	}
 }
 
 global $wp_google_analytics;
