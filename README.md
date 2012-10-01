@@ -50,6 +50,7 @@ easily do all these things.
 * Convert tracking code field to ID, keeping backwards compat - Props danielbachhuber
 * Custom variable support - Props danielbachhuber
 * Track outgoing links and 404s as events
+* Made the whole plugin translatable
 * Deprecated tracking searches
 
 ### 1.2.5

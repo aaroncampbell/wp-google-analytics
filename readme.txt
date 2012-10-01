@@ -2,7 +2,7 @@
 Contributors: aaroncampbell
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CLXNQ3DVK6M48
 Tags: analytics, google, google analytics
-Requires at least: 1.5
+Requires at least: 3.1
 Tested up to: 3.5
 Stable tag: 1.2.5
 
@@ -47,6 +47,10 @@ site, it is often nice to have your own activities ignored, track 404s, searches
 and even where users go when they leave your site.  WP Google Analytics lets you
 easily do all these things.
 
+== Upgrade Notice ==
+
+= 1.3.0 =
+Move to using events for tracking 404s and outgoing links and add support for custom variables
 
 == Changelog ==
 

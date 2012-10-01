@@ -1,0 +1,119 @@
+# Copyright (C) 2012 WP Google Analytics
+# This file is distributed under the same license as the WP Google Analytics package.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Google Analytics 1.3.0\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/wp-google-analytics\n"
+"POT-Creation-Date: 2012-10-01 18:55:47+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2012-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: wp-google-analytics.php:76
+msgid "Google Analytics"
+msgstr ""
+
+#: wp-google-analytics.php:86
+msgid "Google Analytics tracking ID:"
+msgstr ""
+
+#: wp-google-analytics.php:87
+msgid "Additional items to log:"
+msgstr ""
+
+#: wp-google-analytics.php:88
+msgid "Visits to ignore:"
+msgstr ""
+
+#: wp-google-analytics.php:89
+msgid "Custom variables:"
+msgstr ""
+
+#: wp-google-analytics.php:97
+msgid ""
+"Paste your Google Analytics tracking ID (e.g. \"UA-XXXXXX-X\") into the "
+"field."
+msgstr ""
+
+#: wp-google-analytics.php:105
+msgid "Log 404 errors as events"
+msgstr ""
+
+#: wp-google-analytics.php:106
+msgid ""
+"Log searches as /search/{search}?referrer={referrer} (<a href=\"%s"
+"\">deprecated</a>)"
+msgstr ""
+
+#: wp-google-analytics.php:107
+msgid "Log outgoing links as events"
+msgstr ""
+
+#: wp-google-analytics.php:124
+msgid "Default"
+msgstr ""
+
+#: wp-google-analytics.php:125
+msgid "Visitor"
+msgstr ""
+
+#: wp-google-analytics.php:126
+msgid "Session"
+msgstr ""
+
+#: wp-google-analytics.php:127
+msgid "Page"
+msgstr ""
+
+#: wp-google-analytics.php:133
+msgid "Name"
+msgstr ""
+
+#: wp-google-analytics.php:136
+msgid "Value"
+msgstr ""
+
+#: wp-google-analytics.php:139
+msgid "Scope"
+msgstr ""
+
+#: wp-google-analytics.php:152
+msgid "Do not log anything in the admin area"
+msgstr ""
+
+#: wp-google-analytics.php:156
+msgid "Do not log %s when logged in"
+msgstr ""
+
+#: wp-google-analytics.php:217
+msgid "Google Analytics Options"
+msgstr ""
+
+#: wp-google-analytics.php:222
+msgid "Update Options"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "WP Google Analytics"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "http://bluedogwebservices.com/wordpress-plugin/wp-google-analytics/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"Lets you use <a href=\"http://analytics.google.com\">Google Analytics</a> to "
+"track your WordPress site statistics"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Aaron D. Campbell"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://ran.ge/"
+msgstr ""
