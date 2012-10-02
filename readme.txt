@@ -1,5 +1,5 @@
 === WP Google Analytics ===
-Contributors: aaroncampbell
+Contributors: aaroncampbell, PeteMall, range, saracannon
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CLXNQ3DVK6M48
 Tags: analytics, google, google analytics
 Requires at least: 3.1
