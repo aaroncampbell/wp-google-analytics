@@ -402,17 +402,10 @@ class wpGoogleAnalytics {
 			$all_tokens = wp_list_pluck( $this->tokens, 'token' );
 			if ( in_array( $custom_var['value'], $all_tokens ) ) {
 				$token = array_pop( wp_filter_object_list( $this->tokens, array( 'token' => $custom_var['value'] ) ) );
-				if ( is_callable( $token['callback'] ) )
-					$replace = call_user_func( $token['callback'] );
-				else
-					$replace = '';
-
-				if ( ! empty( $token['callback_returns'] ) && 'bool' == $token['callback_returns'] )
-					$replace = ( $replace ) ? 'true' : 'false';
 
 				// Allow tokens to return empty values for specific contexts
+				$ignore = false;
 				if ( ! empty( $token['ignore_when'] ) ) {
-					$ignore = false;
 					foreach( (array)$token['ignore_when'] as $conditional ) {
 						if ( is_callable( $conditional ) ) {
 							$ignore = call_user_func( $conditional );
@@ -420,10 +413,18 @@ class wpGoogleAnalytics {
 								break;
 						}
 					}
-					if ( $ignore )
-						$replace = '';
 				}
 
+				// If we aren't set to ignore this context, possibly execute the callback
+				if ( ! $ignore && ! empty( $token['callback'] ) && is_callable( $token['callback'] ) )
+					$replace = call_user_func( $token['callback'] );
+				else
+					$replace = '';
+
+				if ( ! empty( $token['callback_returns'] ) && 'bool' == $token['callback_returns'] )
+					$replace = ( $replace ) ? 'true' : 'false';
+
+				// Replace our token with the value
 				$custom_var['value'] = str_replace( $custom_var['value'], $replace, $custom_var['value'] );
 			}
 
