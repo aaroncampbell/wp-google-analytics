@@ -43,12 +43,14 @@ class wpGoogleAnalytics {
 
 	static $page_slug = 'wp-google-analytics';
 
+	var $tokens = array();
+
 	/**
 	 * This is our constructor, which is private to force the use of get_instance()
 	 * @return void
 	 */
 	private function __construct() {
-		add_filter( 'init',                     array( $this, 'init_locale' ) );
+		add_filter( 'init',                     array( $this, 'init' ) );
 		add_action( 'admin_init',               array( $this, 'admin_init' ) );
 		add_action( 'admin_menu',               array( $this, 'admin_menu' ) );
 		add_action( 'get_footer',               array( $this, 'insert_code' ) );
@@ -65,8 +67,83 @@ class wpGoogleAnalytics {
 		return self::$instance;
 	}
 
-	public function init_locale() {
+	public function init() {
 		load_plugin_textdomain( 'jetpack', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+
+		$this->tokens = array(
+				array(
+						'token'            => '%the_author%',
+						'callback'         => 'get_the_author',
+						'callback_returns' => 'string',
+						'description'      => __( 'Post author for current view', 'wp-google-analytics' ),
+						'retval'           => __( "Post author's display name", 'wp-google-analytics' ),
+						'ignore_when'      => array(
+								'is_home',
+								'is_front_page',
+								'is_post_type_archive',
+								'is_page',
+								'is_date',
+								'is_category',
+								'is_tag',
+							),
+					),
+				array(
+						'token'            => '%the_category%',
+						'callback'         => array( $this, 'token_the_category' ),
+						'callback_returns' => 'string',
+						'description'      => __( 'Categories assigned to a post', 'wp-google-analytics' ),
+						'retval'           => __( "Category names in a commma-separated list", 'wp-google-analytics' ),
+						'ignore_when'      => array(
+								'is_home',
+								'is_front_page',
+								'is_page',
+								'is_post_type_archive',
+								'is_author',
+								'is_tag',
+							),
+					),
+				array(
+						'token'            => '%the_date%',
+						'callback'         => 'get_the_date',
+						'callback_returns' => 'string',
+						'description'      => __( 'Publication date for the current view', 'wp-google-analytics' ),
+						'retval'           => __( "Format specified by 'Date Format' in Settings -> General", 'wp-google-analytics' ),
+						'ignore_when'      => array(
+								'is_home',
+								'is_front_page',
+								'is_post_type_archive',
+								'is_page',
+								'is_author',
+								'is_category',
+								'is_tag',
+							),
+					),
+				array(
+						'token'            => '%the_tags%',
+						'callback'         => array( $this, 'token_the_tags' ),
+						'callback_returns' => 'string',
+						'description'      => __( 'Tags assigned to a post', 'wp-google-analytics' ),
+						'retval'           => __( "Tag names in a commma-separated list", 'wp-google-analytics' ),
+						'ignore_when'      => array(
+								'is_home',
+								'is_front_page',
+								'is_page',
+								'is_post_type_archive',
+								'is_date',
+								'is_category',
+								'is_author',
+							),
+					),
+				array(
+						'token'            => '%is_user_logged_in%',
+						'callback'         => 'is_user_logged_in',
+						'callback_returns' => 'bool',
+						'description'      => __( 'Whether or not the viewer is logged in', 'wp-google-analytics' ),
+						'retval'           => __( "'true' or 'false'", 'wp-google-analytics' ),
+					),
+			);
+
+		$this->tokens = apply_filters( 'wga_tokens', $this->tokens );
 	}
 
 	/**
@@ -80,6 +157,7 @@ class wpGoogleAnalytics {
 	 * Register our settings
 	 */
 	public function admin_init() {
+
 		register_setting( 'wga', 'wga', array( $this, 'sanitize_general_options' ) );
 
 		add_settings_section( 'wga_general', false, '__return_false', 'wga' );
@@ -93,6 +171,23 @@ class wpGoogleAnalytics {
 	 * Where the user adds their Google Analytics code
 	 */
 	public function field_code() {
+		// Display the tokens in the right column of the page
+		echo '<div id="tokens-description" style="position:absolute;margin-left:600px;margin-right:50px;">';
+		echo '<span>' . __( 'Use tokens in your custom variables to make your fields dynamic based on context. Here are some of the tokens you can use:' ) . '</span>';
+		echo '<table style="text-align:left;">';
+		echo '<thead><tr><td>' . __( 'Token', 'wp-google-analytics' ) . '</td><td>' . __( 'Description', 'wp-google-analytics' ) . '</td><td>' . __( 'Return value', 'wp-google-analytics' ) . '</td></tr></thead>';
+		echo '<tbody>';
+		foreach( $this->tokens as $token ) {
+			echo '<tr>';
+			echo '<td>' . esc_html( $token['token'] ) . '</td>';
+			echo '<td>' . esc_html( $token['description'] ) . '</td>';
+			echo '<td>' . esc_html( $token['retval'] ) . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '</table>';
+		echo '</div>';
+
 		echo '<input name="wga[code]" id="wga-code" type="text" value="' . esc_attr( $this->_get_options( 'code' ) ) . '" />';
 		echo '<p class="description">' . __( 'Paste your Google Analytics tracking ID (e.g. "UA-XXXXXX-X") into the field.', 'wp-google-analytics' ) . '</p>';
 	}
@@ -118,6 +213,7 @@ class wpGoogleAnalytics {
 	 * Define custom variables to be included in your tracking code
 	 */
 	public function field_custom_variables() {
+
 		$custom_vars = $this->_get_options( 'custom_vars' );
 
 		$scope_options = array(
@@ -145,6 +241,7 @@ class wpGoogleAnalytics {
 			echo '</select>';
 			echo '</label><br />';
 		}
+
 	}
 
 	public function field_do_not_track() {
@@ -300,6 +397,37 @@ class wpGoogleAnalytics {
 		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
 			if ( empty( $custom_var['name'] ) || empty( $custom_var['value'] ) )
 				continue;
+
+			// Check whether a token was used with this custom var, and replace with value if so
+			$all_tokens = wp_list_pluck( $this->tokens, 'token' );
+			if ( in_array( $custom_var['value'], $all_tokens ) ) {
+				$token = array_pop( wp_filter_object_list( $this->tokens, array( 'token' => $custom_var['value'] ) ) );
+
+				// Allow tokens to return empty values for specific contexts
+				$ignore = false;
+				if ( ! empty( $token['ignore_when'] ) ) {
+					foreach( (array)$token['ignore_when'] as $conditional ) {
+						if ( is_callable( $conditional ) ) {
+							$ignore = call_user_func( $conditional );
+							if ( $ignore )
+								break;
+						}
+					}
+				}
+
+				// If we aren't set to ignore this context, possibly execute the callback
+				if ( ! $ignore && ! empty( $token['callback'] ) && is_callable( $token['callback'] ) )
+					$replace = call_user_func( $token['callback'] );
+				else
+					$replace = '';
+
+				if ( ! empty( $token['callback_returns'] ) && 'bool' == $token['callback_returns'] )
+					$replace = ( $replace ) ? 'true' : 'false';
+
+				// Replace our token with the value
+				$custom_var['value'] = str_replace( $custom_var['value'], $replace, $custom_var['value'] );
+			}
+
 			$atts = array(
 					"'_setCustomVar'",
 					intval( $i ),
@@ -392,6 +520,20 @@ class wpGoogleAnalytics {
 		$wga = $this->_get_options();
 		if ( 'true' == $wga['log_outgoing'] && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || $wga['ignore_admin_area'] == 'false') )
 			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.3' );
+	}
+
+	/**
+	 * Callback for %the_category% token
+	 */
+	public function token_the_category() {
+		return implode( ', ', wp_list_pluck( (array)get_the_category(), 'name' ) );
+	}
+
+	/**
+	 * Callback for %the_tags% token
+	 */
+	public function token_the_tags() {
+		return implode( ', ', wp_list_pluck( (array)get_the_tags(), 'name' ) );
 	}
 
 }
