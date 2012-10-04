@@ -79,8 +79,12 @@ class wpGoogleAnalytics {
 						'retval'           => __( "Post author's display name", 'wp-google-analytics' ),
 						'ignore_when'      => array(
 								'is_home',
-								'is_archive',
+								'is_front_page',
+								'is_post_type_archive',
 								'is_page',
+								'is_date',
+								'is_category',
+								'is_tag',
 							),
 					),
 				array(
@@ -91,8 +95,11 @@ class wpGoogleAnalytics {
 						'retval'           => __( "Category names in a commma-separated list", 'wp-google-analytics' ),
 						'ignore_when'      => array(
 								'is_home',
+								'is_front_page',
 								'is_page',
-								'is_archive',
+								'is_post_type_archive',
+								'is_author',
+								'is_tag',
 							),
 					),
 				array(
@@ -103,7 +110,12 @@ class wpGoogleAnalytics {
 						'retval'           => __( "Format specified by 'Date Format' in Settings -> General", 'wp-google-analytics' ),
 						'ignore_when'      => array(
 								'is_home',
+								'is_front_page',
+								'is_post_type_archive',
 								'is_page',
+								'is_author',
+								'is_category',
+								'is_tag',
 							),
 					),
 				array(
@@ -114,8 +126,12 @@ class wpGoogleAnalytics {
 						'retval'           => __( "Tag names in a commma-separated list", 'wp-google-analytics' ),
 						'ignore_when'      => array(
 								'is_home',
+								'is_front_page',
 								'is_page',
-								'is_archive',
+								'is_post_type_archive',
+								'is_date',
+								'is_category',
+								'is_author',
 							),
 					),
 				array(
