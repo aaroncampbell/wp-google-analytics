@@ -84,6 +84,18 @@ class wpGoogleAnalytics {
 							),
 					),
 				array(
+						'token'            => '%the_category%',
+						'callback'         => array( $this, 'token_the_category' ),
+						'callback_returns' => 'string',
+						'description'      => __( 'Categories assigned to a post', 'wp-google-analytics' ),
+						'retval'           => __( "Category names in a commma-separated list", 'wp-google-analytics' ),
+						'ignore_when'      => array(
+								'is_home',
+								'is_page',
+								'is_archive',
+							),
+					),
+				array(
 						'token'            => '%the_date%',
 						'callback'         => 'get_the_date',
 						'callback_returns' => 'string',
@@ -92,6 +104,18 @@ class wpGoogleAnalytics {
 						'ignore_when'      => array(
 								'is_home',
 								'is_page',
+							),
+					),
+				array(
+						'token'            => '%the_tags%',
+						'callback'         => array( $this, 'token_the_tags' ),
+						'callback_returns' => 'string',
+						'description'      => __( 'Tags assigned to a post', 'wp-google-analytics' ),
+						'retval'           => __( "Tag names in a commma-separated list", 'wp-google-analytics' ),
+						'ignore_when'      => array(
+								'is_home',
+								'is_page',
+								'is_archive',
 							),
 					),
 				array(
@@ -479,6 +503,20 @@ class wpGoogleAnalytics {
 		$wga = $this->_get_options();
 		if ( 'true' == $wga['log_outgoing'] && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || $wga['ignore_admin_area'] == 'false') )
 			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.3' );
+	}
+
+	/**
+	 * Callback for %the_category% token
+	 */
+	public function token_the_category() {
+		return implode( ', ', wp_list_pluck( (array)get_the_category(), 'name' ) );
+	}
+
+	/**
+	 * Callback for %the_tags% token
+	 */
+	public function token_the_tags() {
+		return implode( ', ', wp_list_pluck( (array)get_the_tags(), 'name' ) );
 	}
 
 }
