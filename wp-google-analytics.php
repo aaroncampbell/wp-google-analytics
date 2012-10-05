@@ -103,6 +103,13 @@ class wpGoogleAnalytics {
 							),
 					),
 				array(
+						'token'            => '%context%',
+						'callback'         => array( $this, 'token_context' ),
+						'callback_returns' => 'string',
+						'description'      => __( 'Which view the visitor is on', 'wp-google-analytics' ),
+						'retval'           => __( "Samples: 'home', 'category', 'post', 'author'" ),
+					),
+				array(
 						'token'            => '%the_date%',
 						'callback'         => 'get_the_date',
 						'callback_returns' => 'string',
@@ -527,6 +534,31 @@ class wpGoogleAnalytics {
 	 */
 	public function token_the_category() {
 		return implode( ', ', wp_list_pluck( (array)get_the_category(), 'name' ) );
+	}
+
+	/**
+	 * Callback for %context% token
+	 */
+	public function token_context() {
+		if ( is_admin() ) {
+			return 'admin';
+		} else if ( is_home() || is_front_page() ) {
+			return 'home';
+		} else if ( is_tax() || is_tag() || is_category() ) {
+			return get_queried_object()->taxonomy;
+		} else if ( is_author() ) {
+			return 'author';
+		} else if ( is_singular() || is_single() || is_page() ) {
+			return get_post_type();
+		} else if ( is_search() ) {
+			return 'search';
+		} else if ( is_date() ) {
+			return 'date';
+		} else if ( is_archive() ) {
+			return 'archive';
+		} else if ( is_404() ) {
+			return '404';
+		}
 	}
 
 	/**
