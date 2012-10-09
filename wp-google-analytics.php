@@ -69,7 +69,7 @@ class wpGoogleAnalytics {
 	}
 
 	public function init() {
-		load_plugin_textdomain( 'jetpack', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+		load_plugin_textdomain( 'wp-google-analytics', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 
 		$this->tokens = array(
 				array(
