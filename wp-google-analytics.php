@@ -525,8 +525,7 @@ class wpGoogleAnalytics {
 	 * If we track outgoing links, this will enqueue our javascript file
 	 */
 	public function track_outgoing() {
-		$wga = $this->_get_options();
-		if ( 'true' == $wga['log_outgoing'] && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || $wga['ignore_admin_area'] == 'false') )
+		if ( 'true' == $this->_get_options( 'log_outgoing' ) && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || 'false' == $this->_get_options( 'ignore_admin_area' ) ) )
 			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.3' );
 	}
 
