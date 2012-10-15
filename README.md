@@ -58,6 +58,12 @@ your own using the 'wga_tokens' filter.
 
 ## Changelog
 
+### 1.4.1
+* Fix undefined index notice for users upgrading from pre-1.3.0
+
+### 1.4.0
+* Support for tokens in custom variables
+
 ### 1.3.1
 * Fixed custom variables not being tracked
 

@@ -78,6 +78,9 @@ Move to using events for tracking 404s and outgoing links and add support for cu
 
 == Changelog ==
 
+= 1.4.1 =
+* Fix undefined index notice for users upgrading from pre-1.3.0
+
 = 1.4.0 =
 * Support for tokens in custom variables
 
