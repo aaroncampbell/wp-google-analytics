@@ -13,6 +13,8 @@
 define('WGA_VERSION', '1.4.0');
 
 /*  Copyright 2006  Aaron D. Campbell  (email : wp_plugins@xavisys.com)
+    Copyright 2013  Iñaki Arenaza  (email : iarenaza@mondragon.edu)
+    Copyright 2013  Mondragon Goi Eskola Politeknikoa (http://www.mondragon.edu/eps/)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,6 +58,14 @@ class wpGoogleAnalytics {
 		add_action( 'get_footer',               array( $this, 'insert_code' ) );
 		add_action( 'wp_enqueue_scripts',       array( $this, 'track_outgoing' ) );
 		add_filter( 'plugin_action_links',      array( $this, 'add_plugin_page_links' ), 10, 2 );
+
+		// Register our shortcode (to be called later as part of the filter hook)
+		add_shortcode( 'wga_event', array( $this, 'do_shortcode' ) );
+
+		// Also Make sure we process shortcodes in text widgets.
+		if ( !has_filter( 'widget_text', 'do_shortcode' ) ) {
+			add_filter( 'widget_text', 'do_shortcode' );
+		}
 	}
 
  	/**
@@ -208,6 +218,7 @@ class wpGoogleAnalytics {
 				'log_404s'       => __( 'Log 404 errors as events', 'wp-google-analytics' ),
 				'log_searches'   => sprintf( __( 'Log searches as /search/{search}?referrer={referrer} (<a href="%s">deprecated</a>)', 'wp-google-analytics' ), 'http://wordpress.org/extend/plugins/wp-google-analytics/faq/' ),
 				'log_outgoing'   => __( 'Log outgoing links as events', 'wp-google-analytics' ),
+				'log_shortcode'  => __( 'Use shortcodes to generate custom events for outgoing links', 'wp-google-analytics' ),
 			);
 		foreach( $addtl_items as $id => $label ) {
 			echo '<label for="wga_' . $id . '">';
@@ -215,6 +226,10 @@ class wpGoogleAnalytics {
 			echo '&nbsp;&nbsp;' . $label;
 			echo '</label><br />';
 		}
+		echo '<div id="shortcodes-description" style="margin-left:25px;width:575px">';
+		echo '<p>' . __( 'Specify the shortcode as <br /><strong>[wga_event category="category name" action="action name"]</strong> some-html-with-external-links <strong>[/wga_event]</strong>.', 'wp-google-analytics' ) . '</p>';
+		echo '<p>' . __( 'You can also specify the label, value or noninteraction options for the event as <br /><strong>[wga_event category="cat name" action="act name" label="label string"]</strong> some-html <strong>[/wga_event]</strong>,<br /><strong>[wga_event category="cat name" action="act name" value="some value"]</strong> some-html <strong>[/wga_event]</strong> or<br /><strong>[wga_event category="cat name" action="act name" noninteraction="true"]</strong> some-html <strong>[/wga_event]</strong>.', 'wp-google-analytics' ) . '</p>';
+		echo '</div>';
 	}
 
 	/**
@@ -252,6 +267,9 @@ class wpGoogleAnalytics {
 
 	}
 
+	/**
+	 * Option to ignore actions in certain areas or by certain roles.
+	 */
 	public function field_do_not_track() {
 		$do_not_track = array(
 				'ignore_admin_area'       => __( 'Do not log anything in the admin area', 'wp-google-analytics' ),
@@ -286,6 +304,7 @@ class wpGoogleAnalytics {
 				'log_404s',
 				'log_searches',
 				'log_outgoing',
+				'log_shortcode',
 				// Things to ignore
 				'ignore_admin_area',
 			);
@@ -525,8 +544,15 @@ class wpGoogleAnalytics {
 	 * If we track outgoing links, this will enqueue our javascript file
 	 */
 	public function track_outgoing() {
-		if ( 'true' == $this->_get_options( 'log_outgoing' ) && (!defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || 'false' == $this->_get_options( 'ignore_admin_area' ) ) )
-			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.3' );
+		$log_outgoing  = $this->_get_options( 'log_outgoing' );
+		$log_shortcode = $this->_get_options( 'log_shortcode' );
+		if ( ( ( 'true' == $log_outgoing ) || ( 'true' == $log_shortcode ) ) && ( !defined('XMLRPC_REQUEST') || !XMLRPC_REQUEST) && ( ! is_admin() || $this->_get_options( 'ignore_admin_area' ) == 'false') ) {
+			wp_enqueue_script( 'wp-google-analytics', plugin_dir_url( __FILE__ ) . 'wp-google-analytics.js', array( 'jquery' ), '0.0.4' );
+			wp_localize_script( 'wp-google-analytics', 'wga_settings', array(
+ 				'external' => $log_outgoing,
+				'custom'   => $log_shortcode,
+			) );
+		}
 	}
 
 	/**
@@ -576,6 +602,36 @@ class wpGoogleAnalytics {
 		return $links;
 	}
 
+
+	/**
+	 * Callback for shortcode filter processing
+	 */
+	public function do_shortcode( $atts, $content = '', $tag ='' ) {
+		if ( 'false' == $this->_get_options( 'log_shortcode' ) ) {
+			return $content;
+		}
+
+		// Extract attributes from the shortcode
+		$data = shortcode_atts( 
+			array(
+				// Possible attributes with default values
+				'category' => __('Default category'),	// We actually need a value for this 
+									// (otherwise the events are not registered).
+				'action' => __('Default action'),  // Idem here.
+				'label' => '',  // Optional, so leave it empty.
+				'value' => 1, 	// Has to be an integer value.
+				'noninteraction' => false,  // If ommited, the default in ga.js is false, so use that value here too.
+			), $atts );
+
+		// Make sure the 'value' of the event is an integer. Otherwise GA ignores the event.
+		$data['value'] = (int) $data['value'];
+
+		// Safe encode the whole lot.
+		$data = htmlspecialchars( json_encode( array_values ( $data ) ), ENT_QUOTES, 'UTF-8' );
+
+		// Wrap the content with a span with a known class, so we can find it and process it from js.
+		return sprintf ( '<span class="wgaevent" data-wgaevent="%s">%s</span>', $data, $content );
+	}
 }
 
 global $wp_google_analytics;
