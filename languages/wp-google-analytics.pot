@@ -118,6 +118,18 @@ msgstr ""
 msgid "Log outgoing links as events"
 msgstr ""
 
+#: wp-google-analytics.php:223
+msgid "Use shortcodes to generate custom events for outgoing links"
+msgstr ""
+
+#: wp-google-analytics.php:232
+msgid "Specify the shortcode as <br /><strong>[wga_event category="category name" action="action name"]</strong> some-html-with-external-links <strong>[/wga_event]</strong>."
+msgstr ""
+
+#: wp-google-analytics.php:233
+msgid "You can also specify the label, value or noninteraction options for the event as <br /><strong>[wga_event category="cat name" action="act name" label="label string"]</strong> some-html <strong>[/wga_event]</strong>,<br /><strong>[wga_event category="cat name" action="act name" value="some value"]</strong> some-html <strong>[/wga_event]</strong> or<br /><strong>[wga_event category="cat name" action="act name" noninteraction="true"]</strong> some-html <strong>[/wga_event]</strong>."
+msgstr ""
+
 #: wp-google-analytics.php:227
 msgid "Default"
 msgstr ""
@@ -160,6 +172,14 @@ msgstr ""
 
 #: wp-google-analytics.php:326
 msgid "Update Options"
+msgstr ""
+
+#: wp-google-analytics.php:618
+msgid "Default category"
+msgstr ""
+
+#: wp-google-analytics.php:620
+msgid "Default action"
 msgstr ""
 
 #. Plugin Name of the plugin/theme
