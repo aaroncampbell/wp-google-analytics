@@ -10,8 +10,6 @@
 		// Add 'external' class and _blank target to all external links
 		$('a:external').on( 'click.wp-google-analytics', function(e){
 			try {
-				// If link has target attribute, store for use below
-				var target = $(this).attr("target");
 				_gaq.push( [ '_trackEvent', 'Outbound Links', e.currentTarget.host, $(this).attr('href') ] );
 				/**
 				 * If this link is not opened in a new tab or window, we need to add
@@ -20,7 +18,7 @@
 				 *
 				 * We're actually checking for modifier keys, middle-click, or pre-existing target=_blank attribute
 				 */
-				if ( ! ( e.metaKey || e.ctrlKey || 1 == e.button || target=="_blank"  ) ) {
+				if ( ! ( e.metaKey || e.ctrlKey || 1 == e.button || '_blank' == $(this).attr('target')  ) ) {
 					e.preventDefault();
 					setTimeout('document.location = "' + $(this).attr('href') + '"', 100)
 				}
