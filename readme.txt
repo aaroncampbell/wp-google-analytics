@@ -29,7 +29,7 @@ Features:
 	* Anything - Use the built-in filter to add your own!
 * Allows you to ignore any user roles (administrators, editors, authors, etc)
 
-Collaborate on the plugin: <a href="https://github.com/aaroncampbell/wp-google-analytics">Pull Quotes on GitHub</a>WP Google Analytics</a>
+Collaborate on the plugin: <a href="https://github.com/aaroncampbell/wp-google-analytics">WP Google Analytics</a>
 Brought to you by <a href="http://aarondcampbell.com/" title="WordPress Plugins">Aaron D. Campbell</a>
 
 == Installation ==
