@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: analytics, google, google analytics
 Requires at least: 3.1
 Tested up to: 4.0
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 
 Lets you use <a href="http://analytics.google.com">Google Analytics</a> to track your WordPress site statistics
 
@@ -30,6 +30,7 @@ Features:
 * Allows you to ignore any user roles (administrators, editors, authors, etc)
 
 Collaborate on the plugin: <a href="https://github.com/aaroncampbell/wp-google-analytics">WP Google Analytics</a>
+
 Brought to you by <a href="http://aarondcampbell.com/" title="WordPress Plugins">Aaron D. Campbell</a>
 
 == Installation ==
@@ -67,6 +68,9 @@ easily do all these things.
 
 == Upgrade Notice ==
 
+= 1.4.1 =
+Fix for translations and small bug when upgrading from very old version of the plugin
+
 = 1.4.0 =
 Allow tokens in the custom variables
 
@@ -80,6 +84,7 @@ Move to using events for tracking 404s and outgoing links and add support for cu
 
 = 1.4.1 =
 * Fix undefined index notice for users upgrading from pre-1.3.0
+* Fix plugin text domain
 
 = 1.4.0 =
 * Support for tokens in custom variables
