@@ -1,9 +1,9 @@
 === WP Google Analytics ===
-Contributors: aaroncampbell, PeteMall, range, saracannon
+Contributors: aaroncampbell
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CLXNQ3DVK6M48
 Tags: analytics, google, google analytics
 Requires at least: 3.1
-Tested up to: 3.5
+Tested up to: 4.0
 Stable tag: 1.4.0
 
 Lets you use <a href="http://analytics.google.com">Google Analytics</a> to track your WordPress site statistics
@@ -29,8 +29,8 @@ Features:
 	* Anything - Use the built-in filter to add your own!
 * Allows you to ignore any user roles (administrators, editors, authors, etc)
 
-<a href="http://bluedogwebservices.com/wordpress-plugin/wp-google-analytics/">WP Google Analytics</a>
-Brought to you by <a href="http://ran.ge/" title="WordPress Development">Ran.ge</a>
+Collaborate on the plugin: <a href="https://github.com/aaroncampbell/wp-google-analytics">Pull Quotes on GitHub</a>WP Google Analytics</a>
+Brought to you by <a href="http://aarondcampbell.com/" title="WordPress Plugins">Aaron D. Campbell</a>
 
 == Installation ==
 
