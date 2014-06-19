@@ -16,9 +16,9 @@
 				 * a small delay so the event can fully fire.  See:
 				 * http://support.google.com/analytics/bin/answer.py?hl=en&answer=1136920
 				 *
-				 * We're actually checking for modifier keys or middle-click
+				 * We're actually checking for modifier keys, middle-click, or pre-existing target=_blank attribute
 				 */
-				if ( ! ( e.metaKey || e.ctrlKey || 1 == e.button ) ) {
+				if ( ! ( e.metaKey || e.ctrlKey || 1 == e.button || '_blank' == $(this).attr('target')  ) ) {
 					e.preventDefault();
 					setTimeout('document.location = "' + $(this).attr('href') + '"', 100)
 				}
