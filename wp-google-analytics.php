@@ -376,6 +376,9 @@ class wpGoogleAnalytics {
 	 * @param bool[optional] $output - defaults to true, false returns but does NOT echo the code
 	 */
 	public function insert_code( $output = true ) {
+		
+		wp_reset_postdata();
+		
 		//If $output is not a boolean false, set it to true (default)
 		$output = ($output !== false);
 
@@ -402,6 +405,7 @@ class wpGoogleAnalytics {
 		);
 
 		// Add custom variables specified by the user
+			
 		foreach( $this->_get_options( 'custom_vars', array() ) as $i => $custom_var ) {
 			if ( empty( $custom_var['name'] ) || empty( $custom_var['value'] ) )
 				continue;
