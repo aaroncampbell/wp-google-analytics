@@ -108,7 +108,7 @@ class wpGoogleAnalytics {
 						'callback'         => array( $this, 'token_context' ),
 						'callback_returns' => 'string',
 						'description'      => __( 'Which view the visitor is on', 'wp-google-analytics' ),
-						'retval'           => __( "Samples: 'home', 'category', 'post', 'author'" ),
+						'retval'           => __( "Samples: 'home', 'category', 'post', 'author'", 'wp-google-analytics' ),
 					),
 				array(
 						'token'            => '%the_date%',
