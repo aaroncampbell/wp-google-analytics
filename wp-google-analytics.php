@@ -258,7 +258,7 @@ class wpGoogleAnalytics {
 			);
 		global $wp_roles;
 		foreach( $wp_roles->roles as $role => $role_info ) {
-			$do_not_track['ignore_role_' . $role] = sprintf( __( 'Do not log %s when logged in', 'wp-google-analytics' ), rtrim( $role_info['name'], 's' ) );
+			$do_not_track['ignore_role_' . $role] = sprintf( __( 'Do not log %s when logged in', 'wp-google-analytics' ), rtrim( translate_user_role( $role_info['name'] ), 's' ) );
 		}
 		foreach( $do_not_track as $id => $label ) {
 			echo '<label for="wga_' . $id . '">';
