@@ -181,7 +181,7 @@ class wpGoogleAnalytics {
 	public function field_code() {
 		// Display the tokens in the right column of the page
 		echo '<div id="tokens-description" style="position:absolute;margin-left:600px;margin-right:50px;">';
-		echo '<span>' . __( 'Use tokens in your custom variables to make your fields dynamic based on context. Here are some of the tokens you can use:' ) . '</span>';
+		echo '<span>' . __( 'Use tokens in your custom variables to make your fields dynamic based on context. Here are some of the tokens you can use:', 'wp-google-analytics' ) . '</span>';
 		echo '<table style="text-align:left;">';
 		echo '<thead><tr><td>' . __( 'Token', 'wp-google-analytics' ) . '</td><td>' . __( 'Description', 'wp-google-analytics' ) . '</td><td>' . __( 'Return value', 'wp-google-analytics' ) . '</td></tr></thead>';
 		echo '<tbody>';
