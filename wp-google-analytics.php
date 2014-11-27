@@ -108,7 +108,7 @@ class wpGoogleAnalytics {
 						'callback'         => array( $this, 'token_context' ),
 						'callback_returns' => 'string',
 						'description'      => __( 'Which view the visitor is on', 'wp-google-analytics' ),
-						'retval'           => __( "Samples: 'home', 'category', 'post', 'author'" ),
+						'retval'           => __( "Samples: 'home', 'category', 'post', 'author'", 'wp-google-analytics' ),
 					),
 				array(
 						'token'            => '%the_date%',
@@ -181,7 +181,7 @@ class wpGoogleAnalytics {
 	public function field_code() {
 		// Display the tokens in the right column of the page
 		echo '<div id="tokens-description" style="position:absolute;margin-left:600px;margin-right:50px;">';
-		echo '<span>' . __( 'Use tokens in your custom variables to make your fields dynamic based on context. Here are some of the tokens you can use:' ) . '</span>';
+		echo '<span>' . __( 'Use tokens in your custom variables to make your fields dynamic based on context. Here are some of the tokens you can use:', 'wp-google-analytics' ) . '</span>';
 		echo '<table style="text-align:left;">';
 		echo '<thead><tr><td>' . __( 'Token', 'wp-google-analytics' ) . '</td><td>' . __( 'Description', 'wp-google-analytics' ) . '</td><td>' . __( 'Return value', 'wp-google-analytics' ) . '</td></tr></thead>';
 		echo '<tbody>';
@@ -258,7 +258,7 @@ class wpGoogleAnalytics {
 			);
 		global $wp_roles;
 		foreach( $wp_roles->roles as $role => $role_info ) {
-			$do_not_track['ignore_role_' . $role] = sprintf( __( 'Do not log %s when logged in', 'wp-google-analytics' ), rtrim( $role_info['name'], 's' ) );
+			$do_not_track['ignore_role_' . $role] = sprintf( __( 'Do not log %s when logged in', 'wp-google-analytics' ), rtrim( translate_user_role( $role_info['name'] ), 's' ) );
 		}
 		foreach( $do_not_track as $id => $label ) {
 			echo '<label for="wga_' . $id . '">';
