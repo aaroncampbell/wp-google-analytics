@@ -179,10 +179,18 @@ class wpGoogleAnalytics {
 	 * Where the user adds their Google Analytics code
 	 */
 	public function field_code() {
-		// Display the tokens in the right column of the page
-		echo '<div id="tokens-description" style="position:absolute;margin-left:600px;margin-right:50px;">';
+		// Display the tokens in the side column of the page
+		if (is_rtl()) {
+			echo '<div id="tokens-description" style="position:absolute;margin-right:600px;margin-left:50px;">';
+		} else {
+			echo '<div id="tokens-description" style="position:absolute;margin-left:600px;margin-right:50px;">';
+		}
 		echo '<span>' . __( 'Use tokens in your custom variables to make your fields dynamic based on context. Here are some of the tokens you can use:' ) . '</span>';
-		echo '<table style="text-align:left;">';
+		if (is_rtl()) {
+			echo '<table style="text-align:right;">';
+		} else {
+			echo '<table style="text-align:left;">';
+		}
 		echo '<thead><tr><td>' . __( 'Token', 'wp-google-analytics' ) . '</td><td>' . __( 'Description', 'wp-google-analytics' ) . '</td><td>' . __( 'Return value', 'wp-google-analytics' ) . '</td></tr></thead>';
 		echo '<tbody>';
 		foreach( $this->tokens as $token ) {
